@@ -212,6 +212,13 @@ export class TitlePhase extends Phase {
                 setModeAndEnd(GameModes.ENDLESS);
                 return true;
               }
+            },
+            {
+              label: gameModes[GameModes.IRONMON].getName(),
+              handler: () => {
+                setModeAndEnd(GameModes.IRONMON);
+                return true;
+              }
             }
           ];
           if (this.scene.gameData.unlocks[Unlockables.SPLICED_ENDLESS_MODE]) {
@@ -234,10 +241,38 @@ export class TitlePhase extends Phase {
           });
           this.scene.ui.showText(i18next.t("menu:selectGameMode"), null, () => this.scene.ui.setOverlayMode(Mode.OPTION_SELECT, { options: options }));
         } else {
+          /*
           this.gameMode = GameModes.CLASSIC;
           this.scene.ui.setMode(Mode.MESSAGE);
           this.scene.ui.clearText();
           this.end();
+          */
+          const options: OptionSelectItem[] = [
+            {
+              label: gameModes[GameModes.CLASSIC].getName(),
+              handler: () => {
+                setModeAndEnd(GameModes.CLASSIC);
+                return true;
+              }
+            },
+            {
+              label: gameModes[GameModes.IRONMON].getName(),
+              handler: () => {
+                setModeAndEnd(GameModes.IRONMON);
+                return true;
+              }
+            }
+          ];
+          options.push({
+            label: i18next.t("menu:cancel"),
+            handler: () => {
+              this.scene.clearPhaseQueue();
+              this.scene.pushPhase(new TitlePhase(this.scene));
+              super.end();
+              return true;
+            }
+          });
+          this.scene.ui.showText(i18next.t("menu:selectGameMode"), null, () => this.scene.ui.setOverlayMode(Mode.OPTION_SELECT, { options: options }));
         }
         return true;
       }
@@ -2312,6 +2347,9 @@ export class BattleEndPhase extends BattlePhase {
     super.start();
 
     this.scene.currentBattle.addBattleScore(this.scene);
+    if (this.scene.currentBattle.moneyScattered) {
+      this.scene.currentBattle.pickUpScatteredMoney(this.scene);
+    }
 
     this.scene.gameData.gameStats.battles++;
     if (this.scene.currentBattle.trainer) {
