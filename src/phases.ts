@@ -54,7 +54,7 @@ import { TerrainType } from "./data/terrain";
 import { OptionSelectConfig, OptionSelectItem } from "./ui/abstact-option-select-ui-handler";
 import { SaveSlotUiMode } from "./ui/save-slot-select-ui-handler";
 import { fetchDailyRunSeed, getDailyRunStarters } from "./data/daily-run";
-import { getRogueRunStarters } from "./data/ironRogue-run";
+import { getIronmonRunStarters } from "./data/ironRogue-run";
 import { GameModes, gameModes } from "./game-mode";
 import PokemonSpecies, { getPokemonSpecies, speciesStarters } from "./data/pokemon-species";
 import i18next from "./plugins/i18n";
@@ -261,6 +261,7 @@ export class TitlePhase extends Phase {
               label: gameModes[GameModes.IRONMON].getName(),
               handler: () => {
                 setModeAndEnd(GameModes.IRONMON);
+				this.initIronmonRun();
                 return true;
               }
             }
@@ -410,15 +411,12 @@ export class TitlePhase extends Phase {
       }
       this.scene.sessionSlotId = slotId;
 
-      const generateDaily = (seed: string) => {
-        this.scene.gameMode = gameModes[GameModes.DAILY];
-
-        this.scene.setSeed(seed);
-        this.scene.resetSeed(1);
+      const generateIRONMON = (seed: string) => {
+        this.scene.gameMode = gameModes[GameModes.IRONMON];
 
         this.scene.money = this.scene.gameMode.getStartingMoney();
 
-        const starters = getDailyRunStarters(this.scene, seed);
+        const starters = getIronmonRunStarters(this.scene);
         const startingLevel = this.scene.gameMode.getStartingLevel();
 
         const party = this.scene.getParty();
@@ -459,12 +457,6 @@ export class TitlePhase extends Phase {
 
       // If Online, calls seed fetch from db to generate daily run. If Offline, generates a daily run based on current date.
       if (!Utils.isLocal) {
-        fetchDailyRunSeed().then(seed => {
-          generateDaily(seed);
-        }).catch(err => {
-          console.error("Failed to load daily run:\n", err);
-        });
-      } else {
         generateDaily(btoa(new Date().toISOString().substring(0, 10)));
       }
     });
