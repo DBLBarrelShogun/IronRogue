@@ -54,6 +54,7 @@ import { TerrainType } from "./data/terrain";
 import { OptionSelectConfig, OptionSelectItem } from "./ui/abstact-option-select-ui-handler";
 import { SaveSlotUiMode } from "./ui/save-slot-select-ui-handler";
 import { fetchDailyRunSeed, getDailyRunStarters } from "./data/daily-run";
+import { getRogueRunStarters } from "./data/ironRogue-run";
 import { GameModes, gameModes } from "./game-mode";
 import PokemonSpecies, { getPokemonSpecies, speciesStarters } from "./data/pokemon-species";
 import i18next from "./plugins/i18n";
@@ -217,6 +218,7 @@ export class TitlePhase extends Phase {
               label: gameModes[GameModes.IRONMON].getName(),
               handler: () => {
                 setModeAndEnd(GameModes.IRONMON);
+				this.initIronmonRun();
                 return true;
               }
             }
@@ -331,6 +333,75 @@ export class TitlePhase extends Phase {
   }
 
   initDailyRun(): void {
+    this.scene.ui.setMode(Mode.SAVE_SLOT, SaveSlotUiMode.SAVE, (slotId: integer) => {
+      this.scene.clearPhaseQueue();
+      if (slotId === -1) {
+        this.scene.pushPhase(new TitlePhase(this.scene));
+        return super.end();
+      }
+      this.scene.sessionSlotId = slotId;
+
+      const generateDaily = (seed: string) => {
+        this.scene.gameMode = gameModes[GameModes.DAILY];
+
+        this.scene.setSeed(seed);
+        this.scene.resetSeed(1);
+
+        this.scene.money = this.scene.gameMode.getStartingMoney();
+
+        const starters = getDailyRunStarters(this.scene, seed);
+        const startingLevel = this.scene.gameMode.getStartingLevel();
+
+        const party = this.scene.getParty();
+        const loadPokemonAssets: Promise<void>[] = [];
+        for (const starter of starters) {
+          const starterProps = this.scene.gameData.getSpeciesDexAttrProps(starter.species, starter.dexAttr);
+          const starterFormIndex = Math.min(starterProps.formIndex, Math.max(starter.species.forms.length - 1, 0));
+          const starterGender = starter.species.malePercent !== null
+            ? !starterProps.female ? Gender.MALE : Gender.FEMALE
+            : Gender.GENDERLESS;
+          const starterPokemon = this.scene.addPlayerPokemon(starter.species, startingLevel, starter.abilityIndex, starterFormIndex, starterGender, starterProps.shiny, starterProps.variant, undefined, starter.nature);
+          starterPokemon.setVisible(false);
+          party.push(starterPokemon);
+          loadPokemonAssets.push(starterPokemon.loadAssets());
+        }
+
+        regenerateModifierPoolThresholds(party, ModifierPoolType.DAILY_STARTER);
+        const modifiers: Modifier[] = Array(3).fill(null).map(() => modifierTypes.EXP_SHARE().withIdFromFunc(modifierTypes.EXP_SHARE).newModifier())
+          .concat(Array(3).fill(null).map(() => modifierTypes.GOLDEN_EXP_CHARM().withIdFromFunc(modifierTypes.GOLDEN_EXP_CHARM).newModifier()))
+          .concat(getDailyRunStarterModifiers(party));
+
+        for (const m of modifiers) {
+          this.scene.addModifier(m, true, false, false, true);
+        }
+        this.scene.updateModifiers(true, true);
+
+        Promise.all(loadPokemonAssets).then(() => {
+          this.scene.time.delayedCall(500, () => this.scene.playBgm());
+          this.scene.gameData.gameStats.dailyRunSessionsPlayed++;
+          this.scene.newArena(this.scene.gameMode.getStartingBiome(this.scene));
+          this.scene.newBattle();
+          this.scene.arena.init();
+          this.scene.sessionPlayTime = 0;
+          this.scene.lastSavePlayTime = 0;
+          this.end();
+        });
+      };
+
+      // If Online, calls seed fetch from db to generate daily run. If Offline, generates a daily run based on current date.
+      if (!Utils.isLocal) {
+        fetchDailyRunSeed().then(seed => {
+          generateDaily(seed);
+        }).catch(err => {
+          console.error("Failed to load daily run:\n", err);
+        });
+      } else {
+        generateDaily(btoa(new Date().toISOString().substring(0, 10)));
+      }
+    });
+  }
+ 
+ initIronmonRun(): void {
     this.scene.ui.setMode(Mode.SAVE_SLOT, SaveSlotUiMode.SAVE, (slotId: integer) => {
       this.scene.clearPhaseQueue();
       if (slotId === -1) {
