@@ -32,7 +32,8 @@ export enum ModifierPoolType {
   WILD,
   TRAINER,
   ENEMY_BUFF,
-  DAILY_STARTER
+  DAILY_STARTER,
+  IRONMON_STARTER
 }
 
 type NewModifierFunc = (type: ModifierType, args: any[]) => Modifier;
@@ -742,7 +743,7 @@ export class EvolutionItemModifierType extends PokemonModifierType implements Ge
 
     this.evolutionItem = evolutionItem;
   }
-  
+
   get name(): string {
     return i18next.t(`modifierType:EvolutionItem.${EvolutionItem[this.evolutionItem]}`);
   }
@@ -1507,6 +1508,42 @@ const dailyStarterModifierPool: ModifierPool = {
   })
 };
 
+const ironMonStarterModifierPool: ModifierPool = {
+  [ModifierTier.COMMON]: [
+    new WeightedModifierType(modifierTypes.BERRY, 3),
+  ].map(m => {
+    m.setTier(ModifierTier.COMMON); return m;
+  }),
+  [ModifierTier.GREAT]: [
+    new WeightedModifierType(modifierTypes.ATTACK_TYPE_BOOSTER, 5),
+  ].map(m => {
+    m.setTier(ModifierTier.GREAT); return m;
+  }),
+  [ModifierTier.ULTRA]: [
+    new WeightedModifierType(modifierTypes.REVIVER_SEED, 4),
+    new WeightedModifierType(modifierTypes.SOOTHE_BELL, 1),
+    new WeightedModifierType(modifierTypes.SOUL_DEW, 1),
+    new WeightedModifierType(modifierTypes.GOLDEN_PUNCH, 1),
+  ].map(m => {
+    m.setTier(ModifierTier.ULTRA); return m;
+  }),
+  [ModifierTier.ROGUE]: [
+    new WeightedModifierType(modifierTypes.GRIP_CLAW, 5),
+    new WeightedModifierType(modifierTypes.BATON, 2),
+    new WeightedModifierType(modifierTypes.FOCUS_BAND, 5),
+    new WeightedModifierType(modifierTypes.QUICK_CLAW, 3),
+    new WeightedModifierType(modifierTypes.KINGS_ROCK, 3),
+  ].map(m => {
+    m.setTier(ModifierTier.ROGUE); return m;
+  }),
+  [ModifierTier.MASTER]: [
+    new WeightedModifierType(modifierTypes.LEFTOVERS, 1),
+    new WeightedModifierType(modifierTypes.SHELL_BELL, 1),
+  ].map(m => {
+    m.setTier(ModifierTier.MASTER); return m;
+  })
+};
+
 export function getModifierType(modifierTypeFunc: ModifierTypeFunc): ModifierType {
   const modifierType = modifierTypeFunc();
   if (!modifierType.id) {
@@ -1519,7 +1556,9 @@ let modifierPoolThresholds = {};
 let ignoredPoolIndexes = {};
 
 let dailyStarterModifierPoolThresholds = {};
+let ironMonStarterModifierPoolThresholds = {};
 let ignoredDailyStarterPoolIndexes = {}; // eslint-disable-line @typescript-eslint/no-unused-vars
+let ignoredIronMonStarterPoolIndexes = {}; // eslint-disable-line @typescript-eslint/no-unused-vars
 
 let enemyModifierPoolThresholds = {};
 let enemyIgnoredPoolIndexes = {}; // eslint-disable-line @typescript-eslint/no-unused-vars
@@ -1544,6 +1583,9 @@ export function getModifierPoolForType(poolType: ModifierPoolType): ModifierPool
     break;
   case ModifierPoolType.DAILY_STARTER:
     pool = dailyStarterModifierPool;
+    break;
+  case ModifierPoolType.IRONMON_STARTER:
+    pool = ironMonStarterModifierPool;
     break;
   }
   return pool;
@@ -1621,6 +1663,10 @@ export function regenerateModifierPoolThresholds(party: Pokemon[], poolType: Mod
   case ModifierPoolType.DAILY_STARTER:
     dailyStarterModifierPoolThresholds = thresholds;
     ignoredDailyStarterPoolIndexes = ignoredIndexes;
+    break;
+  case ModifierPoolType.IRONMON_STARTER:
+    ironMonStarterModifierPoolThresholds = thresholds;
+    ignoredIronMonStarterPoolIndexes = ignoredIndexes;
     break;
   }
 }
@@ -1718,6 +1764,20 @@ export function getDailyRunStarterModifiers(party: PlayerPokemon[]): Modifiers.P
   return ret;
 }
 
+export function getIronMonStarterModifiers(party: PlayerPokemon[]): Modifiers.PokemonHeldItemModifier[] {
+  const ret: Modifiers.PokemonHeldItemModifier[] = [];
+  for (const p of party) {
+    for (let m = 0; m < 1; m++) {
+      /* Give each starter a common item to hold */
+      const tier = ModifierTier.COMMON;
+      const modifier = getNewModifierTypeOption(party, ModifierPoolType.DAILY_STARTER, tier).type.newModifier(p) as Modifiers.PokemonHeldItemModifier;
+      ret.push(modifier);
+    }
+  }
+
+  return ret;
+}
+
 function getNewModifierTypeOption(party: Pokemon[], poolType: ModifierPoolType, tier?: ModifierTier, upgradeCount?: integer, retryCount: integer = 0): ModifierTypeOption {
   const player = !poolType;
   const pool = getModifierPoolForType(poolType);
@@ -1737,6 +1797,9 @@ function getNewModifierTypeOption(party: Pokemon[], poolType: ModifierPoolType, 
     break;
   case ModifierPoolType.DAILY_STARTER:
     thresholds = dailyStarterModifierPoolThresholds;
+    break;
+  case ModifierPoolType.IRONMON_STARTER:
+    thresholds = ironMonStarterModifierPoolThresholds;
     break;
   }
   if (tier === undefined) {
