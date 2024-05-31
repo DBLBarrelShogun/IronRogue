@@ -411,6 +411,12 @@ export class TitlePhase extends Phase {
   }
 
   initIronmonRun(): void {
+    this.scene.gameMode = gameModes[GameModes.IRONMON];
+    if (Math.floor(Math.random() * 2) === 0) {
+      this.scene.gameData.gender = PlayerGender.MALE;
+    } else {
+      this.scene.gameData.gender = PlayerGender.FEMALE;
+    }
     this.scene.ui.setMode(Mode.SAVE_SLOT, SaveSlotUiMode.SAVE, (slotId: integer) => {
       this.scene.clearPhaseQueue();
       if (slotId === -1) {
@@ -420,7 +426,8 @@ export class TitlePhase extends Phase {
       this.scene.sessionSlotId = slotId;
 
       const generateIRONMON = (seed: string) => {
-        this.scene.gameMode = gameModes[GameModes.IRONMON];
+
+
 
         this.scene.money = this.scene.gameMode.getStartingMoney();
 

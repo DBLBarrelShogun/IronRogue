@@ -256,5 +256,5 @@ export const gameModes = Object.freeze({
   [GameModes.ENDLESS]: new GameMode(GameModes.ENDLESS, { isEndless: true, hasShortBiomes: true, hasRandomBosses: true }),
   [GameModes.SPLICED_ENDLESS]: new GameMode(GameModes.SPLICED_ENDLESS, { isEndless: true, hasShortBiomes: true, hasRandomBosses: true, isSplicedOnly: true }),
   [GameModes.DAILY]: new GameMode(GameModes.DAILY, { isDaily: true, hasTrainers: true, hasNoShop: true }),
-  [GameModes.IRONMON]: new GameMode(GameModes.IRONMON, { isClassic: true, hasTrainers: true, hasRandomBosses: true, isIronmon: true})
+  [GameModes.IRONMON]: new GameMode(GameModes.IRONMON, { isClassic: true, hasTrainers: true, hasFixedBattles: true, isIronmon: true})
 });
