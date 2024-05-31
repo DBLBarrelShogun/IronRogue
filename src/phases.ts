@@ -54,7 +54,7 @@ import { TerrainType } from "./data/terrain";
 import { OptionSelectConfig, OptionSelectItem } from "./ui/abstact-option-select-ui-handler";
 import { SaveSlotUiMode } from "./ui/save-slot-select-ui-handler";
 import { fetchDailyRunSeed, getDailyRunStarters } from "./data/daily-run";
-import { getIronmonRunStarters } from "./data/ironRogue-run";
+import { getIronmonRunStarters } from "./data/ironrogue-run";
 import { GameModes, gameModes } from "./game-mode";
 import PokemonSpecies, { getPokemonSpecies, speciesStarters } from "./data/pokemon-species";
 import i18next from "./plugins/i18n";
@@ -218,7 +218,7 @@ export class TitlePhase extends Phase {
               label: gameModes[GameModes.IRONMON].getName(),
               handler: () => {
                 setModeAndEnd(GameModes.IRONMON);
-				this.initIronmonRun();
+                this.initIronmonRun();
                 return true;
               }
             }
@@ -261,7 +261,7 @@ export class TitlePhase extends Phase {
               label: gameModes[GameModes.IRONMON].getName(),
               handler: () => {
                 setModeAndEnd(GameModes.IRONMON);
-				this.initIronmonRun();
+                this.initIronmonRun();
                 return true;
               }
             }
@@ -401,8 +401,8 @@ export class TitlePhase extends Phase {
       }
     });
   }
- 
- initIronmonRun(): void {
+
+  initIronmonRun(): void {
     this.scene.ui.setMode(Mode.SAVE_SLOT, SaveSlotUiMode.SAVE, (slotId: integer) => {
       this.scene.clearPhaseQueue();
       if (slotId === -1) {
@@ -416,7 +416,7 @@ export class TitlePhase extends Phase {
 
         this.scene.money = this.scene.gameMode.getStartingMoney();
 
-        const starters = getIronmonRunStarters(this.scene);
+        const starters = getIronmonRunStarters(this.scene, seed);
         const startingLevel = this.scene.gameMode.getStartingLevel();
 
         const party = this.scene.getParty();
@@ -457,7 +457,7 @@ export class TitlePhase extends Phase {
 
       // If Online, calls seed fetch from db to generate daily run. If Offline, generates a daily run based on current date.
       if (!Utils.isLocal) {
-        generateDaily(btoa(new Date().toISOString().substring(0, 10)));
+        generateIRONMON(btoa(new Date().toISOString().substring(0, 10)));
       }
     });
   }

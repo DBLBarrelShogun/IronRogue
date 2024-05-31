@@ -25,10 +25,9 @@ export function fetchDailyRunSeed(): Promise<string> {
   });
 }
 
-export function getIronmonRunStarters(scene: BattleScene): Starter[] {
+export function getIronmonRunStarters(scene: BattleScene, seed: string): Starter[] {
   const starters: Starter[] = [];
-  const seed: string
-  seed=Math.floor(Math.random()*Number.MAX_VALUE)
+  seed = Math.floor(Math.random()*Number.MAX_VALUE).toString();
   scene.executeWithSeedOffset(() => {
     const startingLevel = gameModes[GameModes.IRONMON].getStartingLevel();
 
