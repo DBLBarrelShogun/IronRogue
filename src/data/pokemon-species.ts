@@ -865,6 +865,9 @@ export enum SpeciesFormKey {
 
 export const allSpecies: PokemonSpecies[] = [];
 
+/* This section controls stat spreads, BST total, etc. If we want to randomise the spreads this might be where we need to make the change (or might lead us to it)*/
+/* PokemonSpecies(Species, generation, subLegendary, legendary, mythical, species, type1, type2, height, weight, ability1, ability2, abilityHidden, baseTotal, baseHp, baseAtk, baseDefr, baseSpatk, baseSpdef, baseSpdr, catchRate, baseFriendship, baseExp, growthRate, malePercent, genderDiffs, canChangeForm?, ...forms) */
+
 export function initSpecies() {
   allSpecies.push(
     new PokemonSpecies(Species.BULBASAUR, 1, false, false, false, "Seed Pokémon", Type.GRASS, Type.POISON, 0.7, 6.9, Abilities.OVERGROW, Abilities.NONE, Abilities.CHLOROPHYLL, 318, 45, 49, 49, 65, 65, 45, 45, 50, 64, GrowthRate.MEDIUM_SLOW, 87.5, false),
