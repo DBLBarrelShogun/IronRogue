@@ -2166,7 +2166,7 @@ export enum Species {
 }
 
 /* To restore the standard default starter list, rename the below */
-export const OLDdefaultStarterSpecies: Species[] = [
+export const defaultStarterSpecies: Species[] = [
   Species.BULBASAUR, Species.CHARMANDER, Species.SQUIRTLE,
   Species.CHIKORITA, Species.CYNDAQUIL, Species.TOTODILE,
   Species.TREECKO, Species.TORCHIC, Species.MUDKIP,
@@ -2181,7 +2181,7 @@ export const OLDdefaultStarterSpecies: Species[] = [
 /* This list should represent all IronRogue legal starters.
 This would apply to a 'New' user, so could be used to generate a base gamedata file
 for import if people want to jump straight in */
-export const defaultStarterSpecies: Species[] = [
+export const FULLdefaultStarterSpecies: Species[] = [
   Species.BULBASAUR, Species.CHARMANDER, Species.SQUIRTLE,
   Species.CATERPIE, Species.WEEDLE, Species.PIDGEY, Species.RATTATA,
   Species.SPEAROW, Species.EKANS, Species.PIKACHU, Species.SANDSHREW,

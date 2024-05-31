@@ -213,7 +213,7 @@ export class TitlePhase extends Phase {
                 setModeAndEnd(GameModes.ENDLESS);
                 return true;
               }
-            },
+            }/*,
             {
               label: gameModes[GameModes.IRONMON].getName(),
               handler: () => {
@@ -221,7 +221,7 @@ export class TitlePhase extends Phase {
                 this.initIronmonRun();
                 return true;
               }
-            }
+            }*/
           ];
           if (this.scene.gameData.unlocks[Unlockables.SPLICED_ENDLESS_MODE]) {
             options.push({
@@ -256,7 +256,7 @@ export class TitlePhase extends Phase {
                 setModeAndEnd(GameModes.CLASSIC);
                 return true;
               }
-            },
+            }/*,
             {
               label: gameModes[GameModes.IRONMON].getName(),
               handler: () => {
@@ -264,7 +264,7 @@ export class TitlePhase extends Phase {
                 this.initIronmonRun();
                 return true;
               }
-            }
+            }*/
           ];
           options.push({
             label: i18next.t("menu:cancel"),
@@ -292,6 +292,14 @@ export class TitlePhase extends Phase {
           });
         return true;
       }
+    },
+    {
+      label: gameModes[GameModes.IRONMON].getName(),
+      handler: () => {
+        this.initIronmonRun();
+        return true;
+      },
+      keepOpen: true
     },
     {
       label: i18next.t("menu:dailyRun"),
@@ -455,15 +463,13 @@ export class TitlePhase extends Phase {
         });
       };
 
-      // If Online, calls seed fetch from db to generate daily run. If Offline, generates a daily run based on current date.
-      if (!Utils.isLocal) {
-        generateIRONMON(btoa(new Date().toISOString().substring(0, 10)));
-      }
+      // Generates a daily run based on current date.
+      generateIRONMON(btoa(new Date().toISOString().substring(0, 10)));
     });
   }
 
   end(): void {
-    if (!this.loaded && !this.scene.gameMode.isDaily) {
+    if (!this.loaded && !(this.scene.gameMode.isDaily || this.scene.gameMode.isIronmon)) {
       this.scene.arena.preloadBgm();
       this.scene.pushPhase(new SelectStarterPhase(this.scene, this.gameMode));
       this.scene.newArena(this.scene.gameMode.getStartingBiome(this.scene));
@@ -481,7 +487,7 @@ export class TitlePhase extends Phase {
         this.scene.pushPhase(new SummonPhase(this.scene, 1, true, true));
       }
 
-      if (this.scene.currentBattle.battleType !== BattleType.TRAINER && (this.scene.currentBattle.waveIndex > 1 || !this.scene.gameMode.isDaily)) {
+      if (this.scene.currentBattle.battleType !== BattleType.TRAINER && (this.scene.currentBattle.waveIndex > 1 || !(this.scene.gameMode.isDaily || this.scene.gameMode.isIronmon))) {
         const minPartySize = this.scene.currentBattle.double ? 2 : 1;
         if (availablePartyMembers > minPartySize) {
           this.scene.pushPhase(new CheckSwitchPhase(this.scene, 0, this.scene.currentBattle.double));
@@ -839,7 +845,7 @@ export class EncounterPhase extends BattlePhase {
     this.scene.initSession();
 
     // Failsafe if players somehow skip floor 200 in classic mode
-    if (this.scene.gameMode.isClassic && this.scene.currentBattle.waveIndex > 200) {
+    if ((this.scene.gameMode.isClassic || this.scene.gameMode.isIronmon) && this.scene.currentBattle.waveIndex > 200) {
       this.scene.unshiftPhase(new GameOverPhase(this.scene));
     }
 
@@ -875,7 +881,7 @@ export class EncounterPhase extends BattlePhase {
       }
 
       if (enemyPokemon.species.speciesId === Species.ETERNATUS) {
-        if (this.scene.gameMode.isClassic && (battle.battleSpec === BattleSpec.FINAL_BOSS || this.scene.gameMode.isWaveFinal(battle.waveIndex))) {
+        if ((this.scene.gameMode.isClassic || this.scene.gameMode.isIronmon) && (battle.battleSpec === BattleSpec.FINAL_BOSS || this.scene.gameMode.isWaveFinal(battle.waveIndex))) {
           if (battle.battleSpec !== BattleSpec.FINAL_BOSS) {
             enemyPokemon.formIndex = 1;
             enemyPokemon.updateScale();
@@ -1111,7 +1117,7 @@ export class EncounterPhase extends BattlePhase {
         this.scene.pushPhase(new ToggleDoublePositionPhase(this.scene, false));
       }
 
-      if (this.scene.currentBattle.battleType !== BattleType.TRAINER && (this.scene.currentBattle.waveIndex > 1 || !this.scene.gameMode.isDaily)) {
+      if (this.scene.currentBattle.battleType !== BattleType.TRAINER && (this.scene.currentBattle.waveIndex > 1 || !(this.scene.gameMode.isDaily || this.scene.gameMode.isIronmon))) {
         const minPartySize = this.scene.currentBattle.double ? 2 : 1;
         if (availablePartyMembers.length > minPartySize) {
           this.scene.pushPhase(new CheckSwitchPhase(this.scene, 0, this.scene.currentBattle.double));
@@ -1248,7 +1254,7 @@ export class SelectBiomePhase extends BattlePhase {
       this.end();
     };
 
-    if ((this.scene.gameMode.isClassic && this.scene.gameMode.isWaveFinal(this.scene.currentBattle.waveIndex + 9))
+    if (((this.scene.gameMode.isClassic || this.scene.gameMode.isIronmon) && this.scene.gameMode.isWaveFinal(this.scene.currentBattle.waveIndex + 9))
       || (this.scene.gameMode.isDaily && this.scene.gameMode.isWaveFinal(this.scene.currentBattle.waveIndex))
       || (this.scene.gameMode.hasShortBiomes && !(this.scene.currentBattle.waveIndex % 50))) {
       setNextBiome(Biome.END);
@@ -1936,7 +1942,7 @@ export class CommandPhase extends FieldPhase {
       }
       break;
     case Command.BALL:
-      if (this.scene.arena.biomeType === Biome.END && (!this.scene.gameMode.isClassic || (this.scene.getEnemyField().filter(p => p.isActive(true)).some(p => !p.scene.gameData.dexData[p.species.speciesId].caughtAttr) && this.scene.gameData.getStarterCount(d => !!d.caughtAttr) < Object.keys(speciesStarters).length - 1))) {
+      if (this.scene.arena.biomeType === Biome.END && (!(this.scene.gameMode.isClassic || this.scene.gameMode.isIronmon) || (this.scene.getEnemyField().filter(p => p.isActive(true)).some(p => !p.scene.gameData.dexData[p.species.speciesId].caughtAttr) && this.scene.gameData.getStarterCount(d => !!d.caughtAttr) < Object.keys(speciesStarters).length - 1))) {
         this.scene.ui.setMode(Mode.COMMAND, this.fieldIndex);
         this.scene.ui.setMode(Mode.MESSAGE);
         this.scene.ui.showText(i18next.t("battle:noPokeballForce"), null, () => {
@@ -4022,7 +4028,7 @@ export class GameOverPhase extends BattlePhase {
     super.start();
 
     // Failsafe if players somehow skip floor 200 in classic mode
-    if (this.scene.gameMode.isClassic && this.scene.currentBattle.waveIndex > 200) {
+    if ((this.scene.gameMode.isClassic || this.scene.gameMode.isIronmon) && this.scene.currentBattle.waveIndex > 200) {
       this.victory = true;
     }
 
