@@ -196,6 +196,7 @@ export class TitlePhase extends Phase {
           this.gameMode = gameMode;
           this.scene.ui.setMode(Mode.MESSAGE);
           this.scene.ui.clearText();
+          this.scene.gameData.partylimit = 6;
           this.end();
         };
         if (this.scene.gameData.unlocks[Unlockables.ENDLESS_MODE]) {
@@ -297,6 +298,14 @@ export class TitlePhase extends Phase {
       label: gameModes[GameModes.IRONMON].getName(),
       handler: () => {
         this.initIronmonRun();
+        return true;
+      },
+      keepOpen: true
+    },
+    {
+      label: gameModes[GameModes.KAIZOIRONMON].getName(),
+      handler: () => {
+        this.initIronmonRun(1);
         return true;
       },
       keepOpen: true
@@ -410,13 +419,22 @@ export class TitlePhase extends Phase {
     });
   }
 
-  initIronmonRun(): void {
-    this.scene.gameMode = gameModes[GameModes.IRONMON];
+  initIronmonRun(maxPartySize: integer = 3, IronMonLevel: integer = 1): void {
+    switch (IronMonLevel) {
+    case 2:
+      this.scene.gameMode = gameModes[GameModes.KAIZOIRONMON];
+      this.scene.gameData.partylimit = maxPartySize;
+    case 1:
+    default:
+      this.scene.gameMode = gameModes[GameModes.IRONMON];
+      break;
+    }
     if (Math.floor(Math.random() * 2) === 0) {
       this.scene.gameData.gender = PlayerGender.MALE;
     } else {
       this.scene.gameData.gender = PlayerGender.FEMALE;
     }
+
     this.scene.ui.setMode(Mode.SAVE_SLOT, SaveSlotUiMode.SAVE, (slotId: integer) => {
       this.scene.clearPhaseQueue();
       if (slotId === -1) {
@@ -427,11 +445,9 @@ export class TitlePhase extends Phase {
 
       const generateIRONMON = (seed: string) => {
 
-
-
         this.scene.money = this.scene.gameMode.getStartingMoney();
 
-        const starters = getIronmonRunStarters(this.scene, seed);
+        const starters = getIronmonRunStarters(this.scene, seed, maxPartySize);
         const startingLevel = this.scene.gameMode.getStartingLevel();
 
         const party = this.scene.getParty();
@@ -4861,7 +4877,7 @@ export class AttemptCapturePhase extends PokemonPhase {
         });
       };
       Promise.all([ pokemon.hideInfo(), this.scene.gameData.setPokemonCaught(pokemon) ]).then(() => {
-        if (this.scene.getParty().length === 6) {
+        if (this.scene.getParty().length === this.scene.gameData.partylimit) {
           const promptRelease = () => {
             this.scene.ui.showText(i18next.t("battle:partyFull", { pokemonName: pokemon.name }), null, () => {
               this.scene.pokemonInfoContainer.makeRoomForConfirmUi();

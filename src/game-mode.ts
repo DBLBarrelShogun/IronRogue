@@ -12,7 +12,8 @@ export enum GameModes {
   ENDLESS,
   SPLICED_ENDLESS,
   DAILY,
-  IRONMON
+  IRONMON,
+  KAIZOIRONMON
 }
 
 interface GameModeConfig {
@@ -171,6 +172,7 @@ export class GameMode implements GameModeConfig {
     case GameModes.DAILY:
       return waveIndex === 50;
     case GameModes.IRONMON:
+    case GameModes.KAIZOIRONMON:
       return waveIndex === 200;
     }
   }
@@ -228,6 +230,7 @@ export class GameMode implements GameModeConfig {
     case GameModes.CLASSIC:
     case GameModes.DAILY:
     case GameModes.IRONMON:
+    case GameModes.KAIZOIRONMON:
       return !isBoss ? 18 : 6;
     case GameModes.ENDLESS:
     case GameModes.SPLICED_ENDLESS:
@@ -247,6 +250,8 @@ export class GameMode implements GameModeConfig {
       return "Daily Run";
     case GameModes.IRONMON:
       return "IronMon";
+    case GameModes.KAIZOIRONMON:
+      return "Kaizo IronMon";
     }
   }
 }
@@ -256,5 +261,6 @@ export const gameModes = Object.freeze({
   [GameModes.ENDLESS]: new GameMode(GameModes.ENDLESS, { isEndless: true, hasShortBiomes: true, hasRandomBosses: true }),
   [GameModes.SPLICED_ENDLESS]: new GameMode(GameModes.SPLICED_ENDLESS, { isEndless: true, hasShortBiomes: true, hasRandomBosses: true, isSplicedOnly: true }),
   [GameModes.DAILY]: new GameMode(GameModes.DAILY, { isDaily: true, hasTrainers: true, hasNoShop: true }),
-  [GameModes.IRONMON]: new GameMode(GameModes.IRONMON, { isClassic: true, hasTrainers: true, hasFixedBattles: true, isIronmon: true})
+  [GameModes.IRONMON]: new GameMode(GameModes.IRONMON, { isClassic: true, hasTrainers: true, hasFixedBattles: true, isIronmon: true}),
+  [GameModes.KAIZOIRONMON]: new GameMode(GameModes.KAIZOIRONMON, { isClassic: true, hasTrainers: true, hasFixedBattles: true, isIronmon: true})
 });

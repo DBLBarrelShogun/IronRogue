@@ -25,7 +25,7 @@ export function fetchDailyRunSeed(): Promise<string> {
   });
 }
 
-export function getIronmonRunStarters(scene: BattleScene, seed: string): Starter[] {
+export function getIronmonRunStarters(scene: BattleScene, seed: string, maxPartySize: integer): Starter[] {
   const starters: Starter[] = [];
   seed = Math.floor(Math.random()*Number.MAX_VALUE).toString();
   scene.executeWithSeedOffset(() => {
@@ -41,9 +41,13 @@ export function getIronmonRunStarters(scene: BattleScene, seed: string): Starter
     }
 
     const starterCosts: integer[] = [];
-    starterCosts.push(Math.round(3.5 + Math.abs(Utils.randSeedGauss(1))));
-    starterCosts.push(Utils.randSeedInt(9 - starterCosts[0], 1));
-    starterCosts.push(10 - (starterCosts[0] + starterCosts[1]));
+    if (maxPartySize === 1) {
+      starterCosts.push(Math.floor(Math.random() * 6));
+    } else {
+      starterCosts.push(Math.round(3.5 + Math.abs(Utils.randSeedGauss(1))));
+      starterCosts.push(Utils.randSeedInt(9 - starterCosts[0], 1));
+      starterCosts.push(10 - (starterCosts[0] + starterCosts[1]));
+    }
 
     for (let c = 0; c < starterCosts.length; c++) {
       const cost = starterCosts[c];

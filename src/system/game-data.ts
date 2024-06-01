@@ -94,6 +94,7 @@ interface SystemSaveData {
   eggs: EggData[];
   gameVersion: string;
   timestamp: integer;
+  partylimit: integer;
 }
 
 export interface SessionSaveData {
@@ -239,6 +240,8 @@ export class GameData {
   public voucherCounts: VoucherCounts;
   public eggs: Egg[];
 
+  public partylimit: integer;
+
   constructor(scene: BattleScene) {
     this.scene = scene;
     this.loadSettings();
@@ -260,6 +263,7 @@ export class GameData {
       [VoucherType.GOLDEN]: 0
     };
     this.eggs = [];
+    this.partylimit = 6;
     this.initDexData();
     this.initStarterData();
   }
@@ -278,6 +282,7 @@ export class GameData {
       voucherCounts: this.voucherCounts,
       eggs: this.eggs.map(e => new EggData(e)),
       gameVersion: this.scene.game.config.gameVersion,
+      partylimit: this.partylimit,
       timestamp: new Date().getTime()
     };
   }
