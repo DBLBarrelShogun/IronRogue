@@ -11,9 +11,7 @@ export enum GameModes {
   CLASSIC,
   ENDLESS,
   SPLICED_ENDLESS,
-  DAILY,
-  IRONMON,
-  KAIZOIRONMON
+  DAILY
 }
 
 interface GameModeConfig {
@@ -27,7 +25,6 @@ interface GameModeConfig {
   hasRandomBiomes?: boolean;
   hasRandomBosses?: boolean;
   isSplicedOnly?: boolean;
-  isIronmon?: boolean;
 }
 
 export class GameMode implements GameModeConfig {
@@ -42,7 +39,6 @@ export class GameMode implements GameModeConfig {
   public hasRandomBiomes: boolean;
   public hasRandomBosses: boolean;
   public isSplicedOnly: boolean;
-  public isIronmon: boolean;
 
   constructor(modeId: GameModes, config: GameModeConfig) {
     this.modeId = modeId;
@@ -171,9 +167,6 @@ export class GameMode implements GameModeConfig {
       return !(waveIndex % 250);
     case GameModes.DAILY:
       return waveIndex === 50;
-    case GameModes.IRONMON:
-    case GameModes.KAIZOIRONMON:
-      return waveIndex === 200;
     }
   }
 
@@ -229,8 +222,6 @@ export class GameMode implements GameModeConfig {
     switch (this.modeId) {
     case GameModes.CLASSIC:
     case GameModes.DAILY:
-    case GameModes.IRONMON:
-    case GameModes.KAIZOIRONMON:
       return !isBoss ? 18 : 6;
     case GameModes.ENDLESS:
     case GameModes.SPLICED_ENDLESS:
@@ -248,10 +239,6 @@ export class GameMode implements GameModeConfig {
       return "Endless (Spliced)";
     case GameModes.DAILY:
       return "Daily Run";
-    case GameModes.IRONMON:
-      return "IronMon";
-    case GameModes.KAIZOIRONMON:
-      return "Kaizo IronMon";
     }
   }
 }
@@ -260,7 +247,5 @@ export const gameModes = Object.freeze({
   [GameModes.CLASSIC]: new GameMode(GameModes.CLASSIC, { isClassic: true, hasTrainers: true, hasFixedBattles: true }),
   [GameModes.ENDLESS]: new GameMode(GameModes.ENDLESS, { isEndless: true, hasShortBiomes: true, hasRandomBosses: true }),
   [GameModes.SPLICED_ENDLESS]: new GameMode(GameModes.SPLICED_ENDLESS, { isEndless: true, hasShortBiomes: true, hasRandomBosses: true, isSplicedOnly: true }),
-  [GameModes.DAILY]: new GameMode(GameModes.DAILY, { isDaily: true, hasTrainers: true, hasNoShop: true }),
-  [GameModes.IRONMON]: new GameMode(GameModes.IRONMON, { isClassic: true, hasTrainers: true, hasFixedBattles: true, isIronmon: true}),
-  [GameModes.KAIZOIRONMON]: new GameMode(GameModes.KAIZOIRONMON, { isClassic: true, hasTrainers: true, hasFixedBattles: true, isIronmon: true})
+  [GameModes.DAILY]: new GameMode(GameModes.DAILY, { isDaily: true, hasTrainers: true, hasNoShop: true })
 });

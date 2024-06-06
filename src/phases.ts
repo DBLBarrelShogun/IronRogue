@@ -19,7 +19,7 @@ import { BattleStat, getBattleStatLevelChangeDescription, getBattleStatName } fr
 import { biomeLinks, getBiomeName } from "./data/biomes";
 import { Biome } from "./data/enums/biome";
 import { ModifierTier } from "./modifier/modifier-tier";
-import { FusePokemonModifierType, ModifierPoolType, ModifierType, ModifierTypeFunc, ModifierTypeOption, PokemonModifierType, PokemonMoveModifierType, PokemonPpRestoreModifierType, PokemonPpUpModifierType, RememberMoveModifierType, TmModifierType, getDailyRunStarterModifiers, getIronMonStarterModifiers, getEnemyBuffModifierForWave, getModifierType, getPlayerModifierTypeOptions, getPlayerShopModifierTypeOptionsForWave, modifierTypes, regenerateModifierPoolThresholds } from "./modifier/modifier-type";
+import { FusePokemonModifierType, ModifierPoolType, ModifierType, ModifierTypeFunc, ModifierTypeOption, PokemonModifierType, PokemonMoveModifierType, PokemonPpRestoreModifierType, PokemonPpUpModifierType, RememberMoveModifierType, TmModifierType, getDailyRunStarterModifiers, getEnemyBuffModifierForWave, getModifierType, getPlayerModifierTypeOptions, getPlayerShopModifierTypeOptionsForWave, modifierTypes, regenerateModifierPoolThresholds } from "./modifier/modifier-type";
 import SoundFade from "phaser3-rex-plugins/plugins/soundfade";
 import { BattlerTagLapseType, EncoreTag, HideSpriteTag as HiddenTag, ProtectedTag, TrappedTag } from "./data/battler-tags";
 import { BattlerTagType } from "./data/enums/battler-tag-type";
@@ -48,13 +48,12 @@ import { addPokeballCaptureStars, addPokeballOpenParticles } from "./field/anims
 import { SpeciesFormChangeActiveTrigger, SpeciesFormChangeManualTrigger, SpeciesFormChangeMoveLearnedTrigger, SpeciesFormChangePostMoveTrigger, SpeciesFormChangePreMoveTrigger } from "./data/pokemon-forms";
 import { battleSpecDialogue, getCharVariantFromDialogue, miscDialogue } from "./data/dialogue";
 import ModifierSelectUiHandler, { SHOP_OPTIONS_ROW_LIMIT } from "./ui/modifier-select-ui-handler";
-import { Setting } from "./system/settings";
+import { SettingKeys } from "./system/settings/settings";
 import { Tutorial, handleTutorial } from "./tutorial";
 import { TerrainType } from "./data/terrain";
 import { OptionSelectConfig, OptionSelectItem } from "./ui/abstact-option-select-ui-handler";
 import { SaveSlotUiMode } from "./ui/save-slot-select-ui-handler";
 import { fetchDailyRunSeed, getDailyRunStarters } from "./data/daily-run";
-import { getIronmonRunStarters } from "./data/ironrogue-run";
 import { GameModes, gameModes } from "./game-mode";
 import PokemonSpecies, { getPokemonSpecies, speciesStarters } from "./data/pokemon-species";
 import i18next from "./plugins/i18n";
@@ -62,7 +61,7 @@ import { Abilities } from "./data/enums/abilities";
 import * as Overrides from "./overrides";
 import { TextStyle, addTextObject } from "./ui/text";
 import { Type } from "./data/type";
-import { MoveUsedEvent, TurnEndEvent, TurnInitEvent } from "./battle-scene-events";
+import { BerryUsedEvent, MoveUsedEvent, TurnEndEvent, TurnInitEvent } from "./battle-scene-events";
 
 
 export class LoginPhase extends Phase {
@@ -196,7 +195,6 @@ export class TitlePhase extends Phase {
           this.gameMode = gameMode;
           this.scene.ui.setMode(Mode.MESSAGE);
           this.scene.ui.clearText();
-          this.scene.gameData.partylimit = 6;
           this.end();
         };
         if (this.scene.gameData.unlocks[Unlockables.ENDLESS_MODE]) {
@@ -214,15 +212,7 @@ export class TitlePhase extends Phase {
                 setModeAndEnd(GameModes.ENDLESS);
                 return true;
               }
-            }/*,
-            {
-              label: gameModes[GameModes.IRONMON].getName(),
-              handler: () => {
-                setModeAndEnd(GameModes.IRONMON);
-                this.initIronmonRun();
-                return true;
-              }
-            }*/
+            }
           ];
           if (this.scene.gameData.unlocks[Unlockables.SPLICED_ENDLESS_MODE]) {
             options.push({
@@ -244,39 +234,10 @@ export class TitlePhase extends Phase {
           });
           this.scene.ui.showText(i18next.t("menu:selectGameMode"), null, () => this.scene.ui.setOverlayMode(Mode.OPTION_SELECT, { options: options }));
         } else {
-          /*
           this.gameMode = GameModes.CLASSIC;
           this.scene.ui.setMode(Mode.MESSAGE);
           this.scene.ui.clearText();
           this.end();
-          */
-          const options: OptionSelectItem[] = [
-            {
-              label: gameModes[GameModes.CLASSIC].getName(),
-              handler: () => {
-                setModeAndEnd(GameModes.CLASSIC);
-                return true;
-              }
-            }/*,
-            {
-              label: gameModes[GameModes.IRONMON].getName(),
-              handler: () => {
-                setModeAndEnd(GameModes.IRONMON);
-                this.initIronmonRun();
-                return true;
-              }
-            }*/
-          ];
-          options.push({
-            label: i18next.t("menu:cancel"),
-            handler: () => {
-              this.scene.clearPhaseQueue();
-              this.scene.pushPhase(new TitlePhase(this.scene));
-              super.end();
-              return true;
-            }
-          });
-          this.scene.ui.showText(i18next.t("menu:selectGameMode"), null, () => this.scene.ui.setOverlayMode(Mode.OPTION_SELECT, { options: options }));
         }
         return true;
       }
@@ -293,22 +254,6 @@ export class TitlePhase extends Phase {
           });
         return true;
       }
-    },
-    {
-      label: gameModes[GameModes.IRONMON].getName(),
-      handler: () => {
-        this.initIronmonRun();
-        return true;
-      },
-      keepOpen: true
-    },
-    {
-      label: gameModes[GameModes.KAIZOIRONMON].getName(),
-      handler: () => {
-        this.initIronmonRun(1);
-        return true;
-      },
-      keepOpen: true
     },
     {
       label: i18next.t("menu:dailyRun"),
@@ -419,78 +364,8 @@ export class TitlePhase extends Phase {
     });
   }
 
-  initIronmonRun(maxPartySize: integer = 3, IronMonLevel: integer = 1): void {
-    switch (IronMonLevel) {
-    case 2:
-      this.scene.gameMode = gameModes[GameModes.KAIZOIRONMON];
-      this.scene.gameData.partylimit = maxPartySize;
-    case 1:
-    default:
-      this.scene.gameMode = gameModes[GameModes.IRONMON];
-      break;
-    }
-    if (Math.floor(Math.random() * 2) === 0) {
-      this.scene.gameData.gender = PlayerGender.MALE;
-    } else {
-      this.scene.gameData.gender = PlayerGender.FEMALE;
-    }
-
-    this.scene.ui.setMode(Mode.SAVE_SLOT, SaveSlotUiMode.SAVE, (slotId: integer) => {
-      this.scene.clearPhaseQueue();
-      if (slotId === -1) {
-        this.scene.pushPhase(new TitlePhase(this.scene));
-        return super.end();
-      }
-      this.scene.sessionSlotId = slotId;
-
-      const generateIRONMON = (seed: string) => {
-
-        this.scene.money = this.scene.gameMode.getStartingMoney();
-
-        const starters = getIronmonRunStarters(this.scene, seed, maxPartySize);
-        const startingLevel = this.scene.gameMode.getStartingLevel();
-
-        const party = this.scene.getParty();
-        const loadPokemonAssets: Promise<void>[] = [];
-        for (const starter of starters) {
-          const starterProps = this.scene.gameData.getSpeciesDexAttrProps(starter.species, starter.dexAttr);
-          const starterFormIndex = Math.min(starterProps.formIndex, Math.max(starter.species.forms.length - 1, 0));
-          const starterGender = starter.species.malePercent !== null
-            ? !starterProps.female ? Gender.MALE : Gender.FEMALE
-            : Gender.GENDERLESS;
-          const starterPokemon = this.scene.addPlayerPokemon(starter.species, startingLevel, starter.abilityIndex, starterFormIndex, starterGender, starterProps.shiny, starterProps.variant, undefined, starter.nature);
-          starterPokemon.setVisible(false);
-          party.push(starterPokemon);
-          loadPokemonAssets.push(starterPokemon.loadAssets());
-        }
-
-        regenerateModifierPoolThresholds(party, ModifierPoolType.DAILY_STARTER);
-        const modifiers: Modifier[] = getIronMonStarterModifiers(party);
-
-        for (const m of modifiers) {
-          this.scene.addModifier(m, true, false, false, true);
-        }
-        this.scene.updateModifiers(true, true);
-
-        Promise.all(loadPokemonAssets).then(() => {
-          this.scene.time.delayedCall(500, () => this.scene.playBgm());
-          this.scene.gameData.gameStats.dailyRunSessionsPlayed++;
-          this.scene.newArena(this.scene.gameMode.getStartingBiome(this.scene));
-          this.scene.newBattle();
-          this.scene.arena.init();
-          this.scene.sessionPlayTime = 0;
-          this.scene.lastSavePlayTime = 0;
-          this.end();
-        });
-      };
-
-      // Generates a daily run based on current date.
-      generateIRONMON(btoa(new Date().toISOString().substring(0, 10)));
-    });
-  }
-
   end(): void {
-    if (!this.loaded && !(this.scene.gameMode.isDaily || this.scene.gameMode.isIronmon)) {
+    if (!this.loaded && !this.scene.gameMode.isDaily) {
       this.scene.arena.preloadBgm();
       this.scene.pushPhase(new SelectStarterPhase(this.scene, this.gameMode));
       this.scene.newArena(this.scene.gameMode.getStartingBiome(this.scene));
@@ -508,7 +383,7 @@ export class TitlePhase extends Phase {
         this.scene.pushPhase(new SummonPhase(this.scene, 1, true, true));
       }
 
-      if (this.scene.currentBattle.battleType !== BattleType.TRAINER && (this.scene.currentBattle.waveIndex > 1 || !(this.scene.gameMode.isDaily || this.scene.gameMode.isIronmon))) {
+      if (this.scene.currentBattle.battleType !== BattleType.TRAINER && (this.scene.currentBattle.waveIndex > 1 || !this.scene.gameMode.isDaily)) {
         const minPartySize = this.scene.currentBattle.double ? 2 : 1;
         if (availablePartyMembers > minPartySize) {
           this.scene.pushPhase(new CheckSwitchPhase(this.scene, 0, this.scene.currentBattle.double));
@@ -602,7 +477,7 @@ export class SelectGenderPhase extends Phase {
             label: i18next.t("menu:boy"),
             handler: () => {
               this.scene.gameData.gender = PlayerGender.MALE;
-              this.scene.gameData.saveSetting(Setting.Player_Gender, 0);
+              this.scene.gameData.saveSetting(SettingKeys.Player_Gender, 0);
               this.scene.gameData.saveSystem().then(() => this.end());
               return true;
             }
@@ -611,7 +486,7 @@ export class SelectGenderPhase extends Phase {
             label: i18next.t("menu:girl"),
             handler: () => {
               this.scene.gameData.gender = PlayerGender.FEMALE;
-              this.scene.gameData.saveSetting(Setting.Player_Gender, 1);
+              this.scene.gameData.saveSetting(SettingKeys.Player_Gender, 1);
               this.scene.gameData.saveSystem().then(() => this.end());
               return true;
             }
@@ -866,7 +741,7 @@ export class EncounterPhase extends BattlePhase {
     this.scene.initSession();
 
     // Failsafe if players somehow skip floor 200 in classic mode
-    if ((this.scene.gameMode.isClassic || this.scene.gameMode.isIronmon) && this.scene.currentBattle.waveIndex > 200) {
+    if (this.scene.gameMode.isClassic && this.scene.currentBattle.waveIndex > 200) {
       this.scene.unshiftPhase(new GameOverPhase(this.scene));
     }
 
@@ -902,7 +777,7 @@ export class EncounterPhase extends BattlePhase {
       }
 
       if (enemyPokemon.species.speciesId === Species.ETERNATUS) {
-        if ((this.scene.gameMode.isClassic || this.scene.gameMode.isIronmon) && (battle.battleSpec === BattleSpec.FINAL_BOSS || this.scene.gameMode.isWaveFinal(battle.waveIndex))) {
+        if (this.scene.gameMode.isClassic && (battle.battleSpec === BattleSpec.FINAL_BOSS || this.scene.gameMode.isWaveFinal(battle.waveIndex))) {
           if (battle.battleSpec !== BattleSpec.FINAL_BOSS) {
             enemyPokemon.formIndex = 1;
             enemyPokemon.updateScale();
@@ -1084,14 +959,15 @@ export class EncounterPhase extends BattlePhase {
       if (!encounterMessages?.length) {
         doSummon();
       } else {
+        let message: string;
+        this.scene.executeWithSeedOffset(() => message = Utils.randSeedItem(encounterMessages), this.scene.currentBattle.waveIndex);
+
         const showDialogueAndSummon = () => {
-          let message: string;
-          this.scene.executeWithSeedOffset(() => message = Utils.randSeedItem(encounterMessages), this.scene.currentBattle.waveIndex);
           this.scene.ui.showDialogue(message, trainer.getName(TrainerSlot.NONE,true), null, () => {
             this.scene.charSprite.hide().then(() => this.scene.hideFieldOverlay(250).then(() => doSummon()));
           });
         };
-        if (this.scene.currentBattle.trainer.config.hasCharSprite) {
+        if (this.scene.currentBattle.trainer.config.hasCharSprite && !this.scene.ui.shouldSkipDialogue(message)) {
           this.scene.showFieldOverlay(500).then(() => this.scene.charSprite.showCharacter(trainer.getKey(), getCharVariantFromDialogue(encounterMessages[0])).then(() => showDialogueAndSummon()));
         } else {
           showDialogueAndSummon();
@@ -1138,7 +1014,7 @@ export class EncounterPhase extends BattlePhase {
         this.scene.pushPhase(new ToggleDoublePositionPhase(this.scene, false));
       }
 
-      if (this.scene.currentBattle.battleType !== BattleType.TRAINER && (this.scene.currentBattle.waveIndex > 1 || !(this.scene.gameMode.isDaily || this.scene.gameMode.isIronmon))) {
+      if (this.scene.currentBattle.battleType !== BattleType.TRAINER && (this.scene.currentBattle.waveIndex > 1 || !this.scene.gameMode.isDaily)) {
         const minPartySize = this.scene.currentBattle.double ? 2 : 1;
         if (availablePartyMembers.length > minPartySize) {
           this.scene.pushPhase(new CheckSwitchPhase(this.scene, 0, this.scene.currentBattle.double));
@@ -1275,7 +1151,7 @@ export class SelectBiomePhase extends BattlePhase {
       this.end();
     };
 
-    if (((this.scene.gameMode.isClassic || this.scene.gameMode.isIronmon) && this.scene.gameMode.isWaveFinal(this.scene.currentBattle.waveIndex + 9))
+    if ((this.scene.gameMode.isClassic && this.scene.gameMode.isWaveFinal(this.scene.currentBattle.waveIndex + 9))
       || (this.scene.gameMode.isDaily && this.scene.gameMode.isWaveFinal(this.scene.currentBattle.waveIndex))
       || (this.scene.gameMode.hasShortBiomes && !(this.scene.currentBattle.waveIndex % 50))) {
       setNextBiome(Biome.END);
@@ -1678,7 +1554,7 @@ export class SwitchSummonPhase extends SummonPhase {
     const lastUsedMove = moveId ? allMoves[moveId] : undefined;
 
     const currentCommand = pokemon.scene.currentBattle.turnCommands[this.fieldIndex]?.command;
-    const lastPokemonIsForceSwitchedAndNotFainted = !!lastUsedMove?.findAttr(attr => attr instanceof ForceSwitchOutAttr) && !this.lastPokemon.isFainted();
+    const lastPokemonIsForceSwitchedAndNotFainted = lastUsedMove?.hasAttr(ForceSwitchOutAttr) && !this.lastPokemon.isFainted();
 
     // Compensate for turn spent summoning
     // Or compensate for force switch move if switched out pokemon is not fainted
@@ -1968,7 +1844,7 @@ export class CommandPhase extends FieldPhase {
       }
       break;
     case Command.BALL:
-      if (this.scene.arena.biomeType === Biome.END && (!(this.scene.gameMode.isClassic || this.scene.gameMode.isIronmon) || (this.scene.getEnemyField().filter(p => p.isActive(true)).some(p => !p.scene.gameData.dexData[p.species.speciesId].caughtAttr) && this.scene.gameData.getStarterCount(d => !!d.caughtAttr) < Object.keys(speciesStarters).length - 1))) {
+      if (this.scene.arena.biomeType === Biome.END && (!this.scene.gameMode.isClassic || (this.scene.getEnemyField().filter(p => p.isActive(true)).some(p => !p.scene.gameData.dexData[p.species.speciesId].caughtAttr) && this.scene.gameData.getStarterCount(d => !!d.caughtAttr) < Object.keys(speciesStarters).length - 1))) {
         this.scene.ui.setMode(Mode.COMMAND, this.fieldIndex);
         this.scene.ui.setMode(Mode.MESSAGE);
         this.scene.ui.showText(i18next.t("battle:noPokeballForce"), null, () => {
@@ -2368,6 +2244,7 @@ export class BerryPhase extends FieldPhase {
                 berryModifier.consumed = false;
               }
             }
+            this.scene.eventTarget.dispatchEvent(new BerryUsedEvent(berryModifier)); // Announce a berry was used
           }
 
           this.scene.updateModifiers(pokemon.isPlayer());
@@ -2442,9 +2319,6 @@ export class BattleEndPhase extends BattlePhase {
     super.start();
 
     this.scene.currentBattle.addBattleScore(this.scene);
-    if (this.scene.currentBattle.moneyScattered) {
-      this.scene.currentBattle.pickUpScatteredMoney(this.scene);
-    }
 
     this.scene.gameData.gameStats.battles++;
     if (this.scene.currentBattle.trainer) {
@@ -2587,9 +2461,9 @@ export class MovePhase extends BattlePhase {
       const oldTarget = moveTarget.value;
       this.scene.getField(true).filter(p => p !== this.pokemon).forEach(p => applyAbAttrs(RedirectMoveAbAttr, p, null, this.move.moveId, moveTarget));
       //Check if this move is immune to being redirected, and restore its target to the intended target if it is.
-      if ((this.pokemon.hasAbilityWithAttr(BlockRedirectAbAttr) || this.move.getMove().getAttrs(BypassRedirectAttr).length)) {
+      if ((this.pokemon.hasAbilityWithAttr(BlockRedirectAbAttr) || this.move.getMove().hasAttr(BypassRedirectAttr))) {
         //If an ability prevented this move from being redirected, display its ability pop up.
-        if ((this.pokemon.hasAbilityWithAttr(BlockRedirectAbAttr) && !this.move.getMove().getAttrs(BypassRedirectAttr).length) && oldTarget !== moveTarget.value) {
+        if ((this.pokemon.hasAbilityWithAttr(BlockRedirectAbAttr) && !this.move.getMove().hasAttr(BypassRedirectAttr)) && oldTarget !== moveTarget.value) {
           this.scene.unshiftPhase(new ShowAbilityPhase(this.scene, this.pokemon.getBattlerIndex(), this.pokemon.getPassiveAbility().hasAttr(BlockRedirectAbAttr)));
         }
         moveTarget.value = oldTarget;
@@ -2679,7 +2553,7 @@ export class MovePhase extends BattlePhase {
         this.scene.eventTarget.dispatchEvent(new MoveUsedEvent(this.pokemon?.id, this.move.getMove(), ppUsed));
       }
 
-      if (!allMoves[this.move.moveId].getAttrs(CopyMoveAttr).length) {
+      if (!allMoves[this.move.moveId].hasAttr(CopyMoveAttr)) {
         this.scene.currentBattle.lastMove = this.move.moveId;
       }
 
@@ -2709,7 +2583,7 @@ export class MovePhase extends BattlePhase {
         this.scene.getPlayerField().forEach(pokemon => {
           applyPostMoveUsedAbAttrs(PostMoveUsedAbAttr, pokemon, this.move, this.pokemon, this.targets);
         });
-        this.scene.getEnemyParty().forEach(pokemon => {
+        this.scene.getEnemyField().forEach(pokemon => {
           applyPostMoveUsedAbAttrs(PostMoveUsedAbAttr, pokemon, this.move, this.pokemon, this.targets);
         });
       }
@@ -2763,7 +2637,7 @@ export class MovePhase extends BattlePhase {
   }
 
   showMoveText(): void {
-    if (this.move.getMove().getAttrs(ChargeAttr).length) {
+    if (this.move.getMove().hasAttr(ChargeAttr)) {
       const lastMove = this.pokemon.getLastXMoves() as TurnMove[];
       if (!lastMove.length || lastMove[0].move !== this.move.getMove().id || lastMove[0].result !== MoveResult.OTHER) {
         this.scene.queueMessage(getPokemonMessage(this.pokemon, ` used\n${this.move.getName()}!`), 500);
@@ -2834,7 +2708,7 @@ export class MoveEffectPhase extends PokemonPhase {
         const hitCount = new Utils.IntegerHolder(1);
         // Assume single target for multi hit
         applyMoveAttrs(MultiHitAttr, user, this.getTarget(), this.move.getMove(), hitCount);
-        if (this.move.getMove() instanceof AttackMove && !this.move.getMove().getAttrs(FixedDamageAttr).length) {
+        if (this.move.getMove() instanceof AttackMove && !this.move.getMove().hasAttr(FixedDamageAttr)) {
           this.scene.applyModifiers(PokemonMultiHitModifier, user.isPlayer(), user, hitCount, new Utils.IntegerHolder(0));
         }
         user.turnData.hitsLeft = user.turnData.hitCount = hitCount.value;
@@ -2845,7 +2719,7 @@ export class MoveEffectPhase extends PokemonPhase {
 
       const targetHitChecks = Object.fromEntries(targets.map(p => [ p.getBattlerIndex(), this.hitCheck(p) ]));
       const activeTargets = targets.map(t => t.isActive(true));
-      if (!activeTargets.length || (!this.move.getMove().getAttrs(VariableTargetAttr).length && !this.move.getMove().isMultiTarget() && !targetHitChecks[this.targets[0]])) {
+      if (!activeTargets.length || (!this.move.getMove().hasAttr(VariableTargetAttr) && !this.move.getMove().isMultiTarget() && !targetHitChecks[this.targets[0]])) {
         user.turnData.hitCount = 1;
         user.turnData.hitsLeft = 1;
         if (activeTargets.length) {
@@ -2889,7 +2763,7 @@ export class MoveEffectPhase extends PokemonPhase {
             applyFilteredMoveAttrs((attr: MoveAttr) => attr instanceof MoveEffectAttr && (attr as MoveEffectAttr).trigger === MoveEffectTrigger.PRE_APPLY && (!attr.firstHitOnly || firstHit),
               user, target, this.move.getMove()).then(() => {
               if (hitResult !== HitResult.FAIL) {
-                const chargeEffect = !!this.move.getMove().getAttrs(ChargeAttr).find(ca => (ca as ChargeAttr).usedChargeEffect(user, this.getTarget(), this.move.getMove()));
+                const chargeEffect = !!this.move.getMove().getAttrs(ChargeAttr).find(ca => ca.usedChargeEffect(user, this.getTarget(), this.move.getMove()));
                 // Charge attribute with charge effect takes all effect attributes and applies them to charge stage, so ignore them if this is present
                 Utils.executeIf(!chargeEffect, () => applyFilteredMoveAttrs((attr: MoveAttr) => attr instanceof MoveEffectAttr && (attr as MoveEffectAttr).trigger === MoveEffectTrigger.POST_APPLY
                   && (attr as MoveEffectAttr).selfTarget && (!attr.firstHitOnly || firstHit), user, target, this.move.getMove())).then(() => {
@@ -2989,7 +2863,7 @@ export class MoveEffectPhase extends PokemonPhase {
     }
 
     const hiddenTag = target.getTag(HiddenTag);
-    if (hiddenTag && !this.move.getMove().getAttrs(HitsTagAttr).filter(hta => (hta as HitsTagAttr).tagType === hiddenTag.tagType).length) {
+    if (hiddenTag && !this.move.getMove().getAttrs(HitsTagAttr).some(hta => hta.tagType === hiddenTag.tagType)) {
       return false;
     }
 
@@ -3001,7 +2875,7 @@ export class MoveEffectPhase extends PokemonPhase {
       return true;
     }
 
-    const isOhko = !!this.move.getMove().getAttrs(OneHitKOAccuracyAttr).length;
+    const isOhko = this.move.getMove().hasAttr(OneHitKOAccuracyAttr);
 
     if (!isOhko) {
       user.scene.applyModifiers(PokemonMoveAccuracyBoosterModifier, user.isPlayer(), user, moveAccuracy);
@@ -3662,7 +3536,7 @@ export class FaintPhase extends PokemonPhase {
       if (defeatSource?.isOnField()) {
         applyPostVictoryAbAttrs(PostVictoryAbAttr, defeatSource);
         const pvmove = allMoves[pokemon.turnData.attacksReceived[0].move];
-        const pvattrs = pvmove.getAttrs(PostVictoryStatChangeAttr) as PostVictoryStatChangeAttr[];
+        const pvattrs = pvmove.getAttrs(PostVictoryStatChangeAttr);
         if (pvattrs.length) {
           for (const pvattr of pvattrs) {
             pvattr.applyPostVictory(defeatSource, defeatSource, pvmove);
@@ -3917,21 +3791,18 @@ export class TrainerVictoryPhase extends BattlePhase {
 
     this.scene.ui.showText(i18next.t("battle:trainerDefeated", { trainerName: this.scene.currentBattle.trainer.getName(TrainerSlot.NONE, true) }), null, () => {
       const victoryMessages = this.scene.currentBattle.trainer.getVictoryMessages();
-      const showMessage = () => {
-        let message: string;
-        this.scene.executeWithSeedOffset(() => message = Utils.randSeedItem(victoryMessages), this.scene.currentBattle.waveIndex);
-        const messagePages = message.split(/\$/g).map(m => m.trim());
+      let message: string;
+      this.scene.executeWithSeedOffset(() => message = Utils.randSeedItem(victoryMessages), this.scene.currentBattle.waveIndex);
 
-        for (let p = messagePages.length - 1; p >= 0; p--) {
-          const originalFunc = showMessageOrEnd;
-          showMessageOrEnd = () => this.scene.ui.showDialogue(messagePages[p], this.scene.currentBattle.trainer.getName(), null, originalFunc);
-        }
+      const showMessage = () => {
+        const originalFunc = showMessageOrEnd;
+        showMessageOrEnd = () => this.scene.ui.showDialogue(message, this.scene.currentBattle.trainer.getName(), null, originalFunc);
 
         showMessageOrEnd();
       };
       let showMessageOrEnd = () => this.end();
       if (victoryMessages?.length) {
-        if (this.scene.currentBattle.trainer.config.hasCharSprite) {
+        if (this.scene.currentBattle.trainer.config.hasCharSprite && !this.scene.ui.shouldSkipDialogue(message)) {
           const originalFunc = showMessageOrEnd;
           showMessageOrEnd = () => this.scene.charSprite.hide().then(() => this.scene.hideFieldOverlay(250).then(() => originalFunc()));
           this.scene.showFieldOverlay(500).then(() => this.scene.charSprite.showCharacter(this.scene.currentBattle.trainer.getKey(), getCharVariantFromDialogue(victoryMessages[0])).then(() => showMessage()));
@@ -4056,7 +3927,7 @@ export class GameOverPhase extends BattlePhase {
     super.start();
 
     // Failsafe if players somehow skip floor 200 in classic mode
-    if ((this.scene.gameMode.isClassic || this.scene.gameMode.isIronmon) && this.scene.currentBattle.waveIndex > 200) {
+    if (this.scene.gameMode.isClassic && this.scene.currentBattle.waveIndex > 200) {
       this.victory = true;
     }
 
@@ -4142,19 +4013,27 @@ export class GameOverPhase extends BattlePhase {
           };
 
           if (this.victory && this.scene.gameMode.isClassic) {
-            this.scene.ui.fadeIn(500).then(() => {
-              this.scene.charSprite.showCharacter(`rival_${this.scene.gameData.gender === PlayerGender.FEMALE ? "m" : "f"}`, getCharVariantFromDialogue(miscDialogue.ending[this.scene.gameData.gender === PlayerGender.FEMALE ? 0 : 1])).then(() => {
-                this.scene.ui.showDialogue(miscDialogue.ending[this.scene.gameData.gender === PlayerGender.FEMALE ? 0 : 1], this.scene.gameData.gender === PlayerGender.FEMALE ? trainerConfigs[TrainerType.RIVAL].name : trainerConfigs[TrainerType.RIVAL].nameFemale, null, () => {
-                  this.scene.ui.fadeOut(500).then(() => {
-                    this.scene.charSprite.hide().then(() => {
-                      const endCardPhase = new EndCardPhase(this.scene);
-                      this.scene.unshiftPhase(endCardPhase);
-                      clear(endCardPhase);
+            const message = miscDialogue.ending[this.scene.gameData.gender === PlayerGender.FEMALE ? 0 : 1];
+
+            if (!this.scene.ui.shouldSkipDialogue(message)) {
+              this.scene.ui.fadeIn(500).then(() => {
+                this.scene.charSprite.showCharacter(`rival_${this.scene.gameData.gender === PlayerGender.FEMALE ? "m" : "f"}`, getCharVariantFromDialogue(miscDialogue.ending[this.scene.gameData.gender === PlayerGender.FEMALE ? 0 : 1])).then(() => {
+                  this.scene.ui.showDialogue(message, this.scene.gameData.gender === PlayerGender.FEMALE ? trainerConfigs[TrainerType.RIVAL].name : trainerConfigs[TrainerType.RIVAL].nameFemale, null, () => {
+                    this.scene.ui.fadeOut(500).then(() => {
+                      this.scene.charSprite.hide().then(() => {
+                        const endCardPhase = new EndCardPhase(this.scene);
+                        this.scene.unshiftPhase(endCardPhase);
+                        clear(endCardPhase);
+                      });
                     });
                   });
                 });
               });
-            });
+            } else {
+              const endCardPhase = new EndCardPhase(this.scene);
+              this.scene.unshiftPhase(endCardPhase);
+              clear(endCardPhase);
+            }
           } else {
             clear();
           }
@@ -4611,9 +4490,10 @@ export class PokemonHealPhase extends CommonAnimPhase {
     const fullHp = pokemon.getHpRatio() >= 1;
 
     const hasMessage = !!this.message;
+    const healOrDamage = (!fullHp || this.hpHealed < 0);
     let lastStatusEffect = StatusEffect.NONE;
 
-    if (!fullHp || this.hpHealed < 0) {
+    if (healOrDamage) {
       const hpRestoreMultiplier = new Utils.IntegerHolder(1);
       if (!this.revive) {
         this.scene.applyModifiers(HealingBoosterModifier, this.player, hpRestoreMultiplier);
@@ -4658,7 +4538,7 @@ export class PokemonHealPhase extends CommonAnimPhase {
       this.scene.queueMessage(getPokemonMessage(pokemon, getStatusEffectHealText(lastStatusEffect)));
     }
 
-    if (fullHp && !lastStatusEffect) {
+    if (!healOrDamage && !lastStatusEffect) {
       super.end();
     }
   }
@@ -4884,7 +4764,7 @@ export class AttemptCapturePhase extends PokemonPhase {
         });
       };
       Promise.all([ pokemon.hideInfo(), this.scene.gameData.setPokemonCaught(pokemon) ]).then(() => {
-        if (this.scene.getParty().length === this.scene.gameData.partylimit) {
+        if (this.scene.getParty().length === 6) {
           const promptRelease = () => {
             this.scene.ui.showText(i18next.t("battle:partyFull", { pokemonName: pokemon.name }), null, () => {
               this.scene.pokemonInfoContainer.makeRoomForConfirmUi();
