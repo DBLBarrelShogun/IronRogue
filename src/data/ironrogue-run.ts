@@ -1,6 +1,5 @@
 import BattleScene from "../battle-scene";
 import { PlayerPokemon } from "../field/pokemon";
-import { GameModes, gameModes } from "../game-mode";
 import { Starter } from "../ui/starter-select-ui-handler";
 import * as Utils from "../utils";
 import { Species } from "./enums/species";
@@ -29,7 +28,7 @@ export function getIronmonRunStarters(scene: BattleScene, seed: string, maxParty
   const starters: Starter[] = [];
   seed = Math.floor(Math.random()*Number.MAX_VALUE).toString();
   scene.executeWithSeedOffset(() => {
-    const startingLevel = gameModes[GameModes.IRONMON].getStartingLevel();
+    const startingLevel = scene.gameMode.getStartingLevel();
 
     if (/\d{18}$/.test(seed)) {
       for (let s = 0; s < 3; s++) {

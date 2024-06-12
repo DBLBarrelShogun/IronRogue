@@ -19,7 +19,7 @@ import { BattleStat, getBattleStatLevelChangeDescription, getBattleStatName } fr
 import { biomeLinks, getBiomeName } from "./data/biomes";
 import { Biome } from "./data/enums/biome";
 import { ModifierTier } from "./modifier/modifier-tier";
-import { FusePokemonModifierType, ModifierPoolType, ModifierType, ModifierTypeFunc, ModifierTypeOption, PokemonModifierType, PokemonMoveModifierType, PokemonPpRestoreModifierType, PokemonPpUpModifierType, RememberMoveModifierType, TmModifierType, getDailyRunStarterModifiers, getEnemyBuffModifierForWave, getModifierType, getPlayerModifierTypeOptions, getPlayerShopModifierTypeOptionsForWave, modifierTypes, regenerateModifierPoolThresholds } from "./modifier/modifier-type";
+import { FusePokemonModifierType, ModifierPoolType, ModifierType, ModifierTypeFunc, ModifierTypeOption, PokemonModifierType, PokemonMoveModifierType, PokemonPpRestoreModifierType, PokemonPpUpModifierType, RememberMoveModifierType, TmModifierType, getDailyRunStarterModifiers, getIronMonStarterModifiers, getEnemyBuffModifierForWave, getModifierType, getPlayerModifierTypeOptions, getPlayerShopModifierTypeOptionsForWave, modifierTypes, regenerateModifierPoolThresholds } from "./modifier/modifier-type";
 import SoundFade from "phaser3-rex-plugins/plugins/soundfade";
 import { BattlerTagLapseType, EncoreTag, HideSpriteTag as HiddenTag, ProtectedTag, TrappedTag } from "./data/battler-tags";
 import { BattlerTagType } from "./data/enums/battler-tag-type";
@@ -55,6 +55,7 @@ import { TerrainType } from "./data/terrain";
 import { OptionSelectConfig, OptionSelectItem } from "./ui/abstact-option-select-ui-handler";
 import { SaveSlotUiMode } from "./ui/save-slot-select-ui-handler";
 import { fetchDailyRunSeed, getDailyRunStarters } from "./data/daily-run";
+import { getIronmonRunStarters } from "./data/ironrogue-run";
 import { GameMode, GameModes, getGameMode } from "./game-mode";
 import PokemonSpecies, { getPokemonSpecies, speciesStarters } from "./data/pokemon-species";
 import i18next from "./plugins/i18n";
@@ -197,6 +198,7 @@ export class TitlePhase extends Phase {
           this.gameMode = gameMode;
           this.scene.ui.setMode(Mode.MESSAGE);
           this.scene.ui.clearText();
+          //this.scene.gameData.partylimit = 6;
           this.end();
         };
         if (this.scene.gameData.unlocks[Unlockables.ENDLESS_MODE]) {
@@ -263,6 +265,22 @@ export class TitlePhase extends Phase {
           });
         return true;
       }
+    },
+    {
+      label: GameMode.getModeName(GameModes.IRONMON),
+      handler: () => {
+        this.initIronmonRun();
+        return true;
+      },
+      keepOpen: true
+    },
+    {
+      label: GameMode.getModeName(GameModes.KAIZOIRONMON),
+      handler: () => {
+        this.initIronmonRun(1, 2);
+        return true;
+      },
+      keepOpen: true
     },
     {
       label: i18next.t("menu:dailyRun"),
@@ -373,8 +391,81 @@ export class TitlePhase extends Phase {
     });
   }
 
+  initIronmonRun(maxPartySize: integer = 3, IronMonLevel: integer = 1): void {
+
+    switch (IronMonLevel) {
+    case 2:
+      this.scene.gameMode = getGameMode(GameModes.KAIZOIRONMON);
+      this.scene.gameData.partylimit = maxPartySize;
+    case 1:
+    default:
+      this.scene.gameMode = getGameMode(GameModes.IRONMON);
+      break;
+    }
+    if (Math.floor(Math.random() * 2) === 0) {
+      console.log("Genetic lottery: Male");
+      this.scene.gameData.gender = PlayerGender.MALE;
+    } else {
+      console.log("Genetic lottery: Female");
+      this.scene.gameData.gender = PlayerGender.FEMALE;
+    }
+
+    this.scene.ui.setMode(Mode.SAVE_SLOT, SaveSlotUiMode.SAVE, (slotId: integer) => {
+      this.scene.clearPhaseQueue();
+      if (slotId === -1) {
+        this.scene.pushPhase(new TitlePhase(this.scene));
+        return super.end();
+      }
+      this.scene.sessionSlotId = slotId;
+
+      const generateIRONMON = (seed: string) => {
+
+        this.scene.money = this.scene.gameMode.getStartingMoney();
+
+        const starters = getIronmonRunStarters(this.scene, seed, maxPartySize);
+        const startingLevel = this.scene.gameMode.getStartingLevel();
+
+        const party = this.scene.getParty();
+        const loadPokemonAssets: Promise<void>[] = [];
+        for (const starter of starters) {
+          const starterProps = this.scene.gameData.getSpeciesDexAttrProps(starter.species, starter.dexAttr);
+          const starterFormIndex = Math.min(starterProps.formIndex, Math.max(starter.species.forms.length - 1, 0));
+          const starterGender = starter.species.malePercent !== null
+            ? !starterProps.female ? Gender.MALE : Gender.FEMALE
+            : Gender.GENDERLESS;
+          const starterPokemon = this.scene.addPlayerPokemon(starter.species, startingLevel, starter.abilityIndex, starterFormIndex, starterGender, starterProps.shiny, starterProps.variant, undefined, starter.nature);
+          starterPokemon.setVisible(false);
+          party.push(starterPokemon);
+          loadPokemonAssets.push(starterPokemon.loadAssets());
+        }
+
+        regenerateModifierPoolThresholds(party, ModifierPoolType.DAILY_STARTER);
+        const modifiers: Modifier[] = getIronMonStarterModifiers(party);
+
+        for (const m of modifiers) {
+          this.scene.addModifier(m, true, false, false, true);
+        }
+        this.scene.updateModifiers(true, true);
+
+        Promise.all(loadPokemonAssets).then(() => {
+          this.scene.time.delayedCall(500, () => this.scene.playBgm());
+          this.scene.gameData.gameStats.dailyRunSessionsPlayed++;
+          this.scene.newArena(this.scene.gameMode.getStartingBiome(this.scene));
+          this.scene.newBattle();
+          this.scene.arena.init();
+          this.scene.sessionPlayTime = 0;
+          this.scene.lastSavePlayTime = 0;
+          this.end();
+        });
+      };
+
+      // Generates a daily run based on current date.
+      generateIRONMON(btoa(new Date().toISOString().substring(0, 10)));
+    });
+  }
+
   end(): void {
-    if (!this.loaded && !this.scene.gameMode.isDaily) {
+    if (!this.loaded && !(this.scene.gameMode.isDaily || this.scene.gameMode.isIronmon )) {
       this.scene.arena.preloadBgm();
       this.scene.gameMode = getGameMode(this.gameMode);
       if (this.gameMode === GameModes.CHALLENGE) {
@@ -397,7 +488,7 @@ export class TitlePhase extends Phase {
         this.scene.pushPhase(new SummonPhase(this.scene, 1, true, true));
       }
 
-      if (this.scene.currentBattle.battleType !== BattleType.TRAINER && (this.scene.currentBattle.waveIndex > 1 || !this.scene.gameMode.isDaily)) {
+      if (this.scene.currentBattle.battleType !== BattleType.TRAINER && (this.scene.currentBattle.waveIndex > 1 || !(this.scene.gameMode.isDaily || this.scene.gameMode.isIronmon))) {
         const minPartySize = this.scene.currentBattle.double ? 2 : 1;
         if (availablePartyMembers > minPartySize) {
           this.scene.pushPhase(new CheckSwitchPhase(this.scene, 0, this.scene.currentBattle.double));
@@ -1060,7 +1151,7 @@ export class EncounterPhase extends BattlePhase {
         this.scene.pushPhase(new ToggleDoublePositionPhase(this.scene, false));
       }
 
-      if (this.scene.currentBattle.battleType !== BattleType.TRAINER && (this.scene.currentBattle.waveIndex > 1 || !this.scene.gameMode.isDaily)) {
+      if (this.scene.currentBattle.battleType !== BattleType.TRAINER && (this.scene.currentBattle.waveIndex > 1 || !(this.scene.gameMode.isDaily || this.scene.gameMode.isIronmon ))) {
         const minPartySize = this.scene.currentBattle.double ? 2 : 1;
         if (availablePartyMembers.length > minPartySize) {
           this.scene.pushPhase(new CheckSwitchPhase(this.scene, 0, this.scene.currentBattle.double));

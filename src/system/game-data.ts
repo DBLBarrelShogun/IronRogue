@@ -89,6 +89,7 @@ interface SystemSaveData {
   timestamp: integer;
   eggPity: integer[];
   unlockPity: integer[];
+  partylimit: integer;
 }
 
 export interface SessionSaveData {
@@ -241,6 +242,8 @@ export class GameData {
   public eggPity: integer[];
   public unlockPity: integer[];
 
+  public partylimit: integer;
+
   constructor(scene: BattleScene) {
     this.scene = scene;
     this.loadSettings();
@@ -266,6 +269,7 @@ export class GameData {
     this.eggs = [];
     this.eggPity = [0, 0, 0, 0];
     this.unlockPity = [0, 0, 0, 0];
+    this.partylimit = 6;
     this.initDexData();
     this.initStarterData();
   }
@@ -286,7 +290,8 @@ export class GameData {
       gameVersion: this.scene.game.config.gameVersion,
       timestamp: new Date().getTime(),
       eggPity: this.eggPity.slice(0),
-      unlockPity: this.unlockPity.slice(0)
+      unlockPity: this.unlockPity.slice(0),
+      partylimit: this.partylimit
     };
   }
 

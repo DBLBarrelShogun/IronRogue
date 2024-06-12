@@ -14,7 +14,9 @@ export enum GameModes {
   ENDLESS,
   SPLICED_ENDLESS,
   DAILY,
-  CHALLENGE
+  CHALLENGE,
+  IRONMON,
+  KAIZOIRONMON
 }
 
 interface GameModeConfig {
@@ -28,6 +30,7 @@ interface GameModeConfig {
   hasRandomBosses?: boolean;
   isSplicedOnly?: boolean;
   isChallenge?: boolean;
+  isIronmon?: boolean;
 }
 
 export class GameMode implements GameModeConfig {
@@ -44,6 +47,7 @@ export class GameMode implements GameModeConfig {
   public isChallenge: boolean;
   public challenges: Challenge[];
   public battleConfig: FixedBattleConfigs;
+  public isIronmon: boolean;
 
   constructor(modeId: GameModes, config: GameModeConfig, battleConfig?: FixedBattleConfigs) {
     this.modeId = modeId;
@@ -178,6 +182,9 @@ export class GameMode implements GameModeConfig {
       return !(waveIndex % 250);
     case GameModes.DAILY:
       return waveIndex === 50;
+    case GameModes.IRONMON:
+    case GameModes.KAIZOIRONMON:
+      return waveIndex === 200;
     }
   }
 
@@ -260,6 +267,8 @@ export class GameMode implements GameModeConfig {
     case GameModes.CLASSIC:
     case GameModes.CHALLENGE:
     case GameModes.DAILY:
+    case GameModes.IRONMON:
+    case GameModes.KAIZOIRONMON:
       return !isBoss ? 18 : 6;
     case GameModes.ENDLESS:
     case GameModes.SPLICED_ENDLESS:
@@ -279,6 +288,10 @@ export class GameMode implements GameModeConfig {
       return i18next.t("gameMode:dailyRun");
     case GameModes.CHALLENGE:
       return i18next.t("gameMode:challenge");
+    case GameModes.IRONMON:
+      return "IronMon";
+    case GameModes.KAIZOIRONMON:
+      return "Kaizo IronMon";
     }
   }
 
@@ -294,6 +307,10 @@ export class GameMode implements GameModeConfig {
       return i18next.t("gameMode:dailyRun");
     case GameModes.CHALLENGE:
       return i18next.t("gameMode:challenge");
+    case GameModes.IRONMON:
+      return "IronMon";
+    case GameModes.KAIZOIRONMON:
+      return "Kaizo IronMon";
     }
   }
 }
@@ -310,5 +327,9 @@ export function getGameMode(gameMode: GameModes): GameMode {
     return new GameMode(GameModes.DAILY, { isDaily: true, hasTrainers: true, hasNoShop: true });
   case GameModes.CHALLENGE:
     return new GameMode(GameModes.CHALLENGE, { isClassic: true, hasTrainers: true, isChallenge: true }, classicFixedBattles);
+  case GameModes.IRONMON:
+    return new GameMode(GameModes.IRONMON, {isClassic: true, hasTrainers: true, isIronmon: true}, classicFixedBattles);
+  case GameModes.KAIZOIRONMON:
+    return new GameMode(GameModes.KAIZOIRONMON, {isClassic: true, hasTrainers: true, isIronmon: true}, classicFixedBattles);
   }
 }
