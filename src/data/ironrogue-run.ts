@@ -41,7 +41,7 @@ export function getIronmonRunStarters(scene: BattleScene, seed: string, maxParty
 
     const starterCosts: integer[] = [];
     if (maxPartySize === 1) {
-      starterCosts.push(Math.floor(Math.random() * 6));
+      starterCosts.push(Math.floor(Math.random() * 6) + 1);
     } else {
       starterCosts.push(Math.round(3.5 + Math.abs(Utils.randSeedGauss(1))));
       starterCosts.push(Utils.randSeedInt(9 - starterCosts[0], 1));

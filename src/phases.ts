@@ -198,7 +198,7 @@ export class TitlePhase extends Phase {
           this.gameMode = gameMode;
           this.scene.ui.setMode(Mode.MESSAGE);
           this.scene.ui.clearText();
-          //this.scene.gameData.partylimit = 6;
+          this.scene.gameData.partylimit = 6;
           this.end();
         };
         if (this.scene.gameData.unlocks[Unlockables.ENDLESS_MODE]) {
@@ -4976,7 +4976,7 @@ export class AttemptCapturePhase extends PokemonPhase {
         });
       };
       Promise.all([ pokemon.hideInfo(), this.scene.gameData.setPokemonCaught(pokemon) ]).then(() => {
-        if (this.scene.getParty().length === 6) {
+        if (this.scene.getParty().length === this.scene.gameData.partylimit) {
           const promptRelease = () => {
             this.scene.ui.showText(i18next.t("battle:partyFull", { pokemonName: pokemon.name }), null, () => {
               this.scene.pokemonInfoContainer.makeRoomForConfirmUi();
