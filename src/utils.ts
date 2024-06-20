@@ -1,5 +1,5 @@
 import i18next from "i18next";
-import { MoneyFormat } from "./enums/money-format";
+import { MoneyFormat } from "#enums/money-format";
 
 export const MissingTextureKey = "__MISSING";
 
@@ -360,6 +360,9 @@ export function apiPost(path: string, data?: any, contentType: string = "applica
       .catch(err => reject(err));
   }) : new Promise(() => {});
 }
+
+/** Alias for the constructor of a class */
+export type Constructor<T> = new(...args: unknown[]) => T;
 
 export class BooleanHolder {
   public value: boolean;
