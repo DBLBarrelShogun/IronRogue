@@ -1,7 +1,9 @@
 IronRogue is a fork of the original PokéRogue fangame which aims to provide the tools required to more easily automate the process of running PokéRogue IronMon. The original IronRogue rules can be found at https://github.com/Reimittv/IronRogue/tree/main.
 
 ## Warnings
-Although every effort is made to ensure this fork honours changes made to the original <strong>Running this fork may lead to unexpected corruption of your PokéRogue data,</strong> as such it is recommended that you run it within an incognito session that is not logged into your main account. If you wish to load your PokéRogue into IronRogue this can be done by first exporting your data to <picture><img src="./public/images/export_data.png" width="300" alt="Export Data"></picture> a .prsv file and importing this back into IronRogue.
+Although every effort is made to ensure this fork honours changes made to the original <strong>Running this fork may lead to unexpected corruption of your PokéRogue data,</strong> as such it is recommended that you run it within an incognito session that is not logged into your main account. If you wish to load your PokéRogue into IronRogue this can be done by first exporting your data from PokéRogue: 
+<picture><img src="./public/images/export_data.png" width="300" alt="Export Data"></picture>
+to a .prsv file and importing this back into IronRogue.
 
 <picture><img src="./public/images/logo.png" width="300" alt="PokéRogue"></picture>
 
