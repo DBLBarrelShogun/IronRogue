@@ -1244,6 +1244,7 @@ export const modifierTypes = {
   VOUCHER: () => new AddVoucherModifierType(VoucherType.REGULAR, 1),
   VOUCHER_PLUS: () => new AddVoucherModifierType(VoucherType.PLUS, 1),
   VOUCHER_PREMIUM: () => new AddVoucherModifierType(VoucherType.PREMIUM, 1),
+  VOUCHER_GOLDEN: () => new AddVoucherModifierType(VoucherType.GOLDEN, 1),
 
   GOLDEN_POKEBALL: () => new ModifierType("modifierType:ModifierType.GOLDEN_POKEBALL", "pb_gold", (type, _args) => new Modifiers.ExtraModifierModifier(type), null, "pb_bounce_1"),
 
@@ -1287,6 +1288,7 @@ const modifierPool: ModifierPool = {
     new WeightedModifierType(modifierTypes.TEMP_STAT_BOOSTER, 4),
     new WeightedModifierType(modifierTypes.BERRY, 2),
     new WeightedModifierType(modifierTypes.TM_COMMON, 1),
+    new WeightedModifierType(modifierTypes.VOUCHER, (party: Pokemon[], rerollCount: integer) => party[0].scene.gameMode.isLunamon ? Math.max(1 - rerollCount, 0) : 0, 1),
   ].map(m => {
     m.setTier(ModifierTier.COMMON); return m;
   }),
@@ -1344,7 +1346,7 @@ const modifierPool: ModifierPool = {
     new WeightedModifierType(modifierTypes.EVOLUTION_ITEM, (party: Pokemon[]) => {
       return Math.min(Math.ceil(party[0].scene.currentBattle.waveIndex / 15), 8);
     }, 8),
-    new WeightedModifierType(modifierTypes.MAP, (party: Pokemon[]) => party[0].scene.gameMode.isClassic && party[0].scene.currentBattle.waveIndex < 180 ? 1 : 0, 1),
+    new WeightedModifierType(modifierTypes.MAP, (party: Pokemon[]) => party[0].scene.gameMode.isClassic && !party[0].scene.gameMode.isIronmon && party[0].scene.currentBattle.waveIndex < 180 ? 1 : 0, 1),
     new WeightedModifierType(modifierTypes.TM_GREAT, 2),
     new WeightedModifierType(modifierTypes.MEMORY_MUSHROOM, (party: Pokemon[]) => {
       if (!party.find(p => p.getLearnableLevelMoves().length)) {
@@ -1357,6 +1359,7 @@ const modifierPool: ModifierPool = {
     new WeightedModifierType(modifierTypes.TERA_SHARD, 1),
     new WeightedModifierType(modifierTypes.DNA_SPLICERS, (party: Pokemon[]) => party[0].scene.gameMode.isSplicedOnly && party.filter(p => !p.fusionSpecies).length > 1 ? 4 : 0),
     new WeightedModifierType(modifierTypes.VOUCHER, (party: Pokemon[], rerollCount: integer) => !party[0].scene.gameMode.isDaily ? Math.max(1 - rerollCount, 0) : 0, 1),
+    new WeightedModifierType(modifierTypes.VOUCHER_PLUS, (party: Pokemon[], rerollCount: integer) => party[0].scene.gameMode.isLunamon ? Math.max(1 - rerollCount, 0) : 0, 1),
   ].map(m => {
     m.setTier(ModifierTier.GREAT); return m;
   }),
@@ -1418,6 +1421,7 @@ const modifierPool: ModifierPool = {
     new WeightedModifierType(modifierTypes.MEGA_BRACELET, (party: Pokemon[]) => Math.min(Math.ceil(party[0].scene.currentBattle.waveIndex / 50), 4) * 8, 32),
     new WeightedModifierType(modifierTypes.DYNAMAX_BAND, (party: Pokemon[]) => Math.min(Math.ceil(party[0].scene.currentBattle.waveIndex / 50), 4) * 8, 32),
     new WeightedModifierType(modifierTypes.VOUCHER_PLUS, (party: Pokemon[], rerollCount: integer) => !party[0].scene.gameMode.isDaily ? Math.max(5 - rerollCount * 2, 0) : 0, 5),
+    new WeightedModifierType(modifierTypes.VOUCHER_PREMIUM, (party: Pokemon[], rerollCount: integer) => party[0].scene.gameMode.isLunamon ? Math.max(5 - rerollCount * 2, 0) : 0, 5),
   ].map(m => {
     m.setTier(ModifierTier.ROGUE); return m;
   }),
@@ -1427,6 +1431,7 @@ const modifierPool: ModifierPool = {
     new WeightedModifierType(modifierTypes.HEALING_CHARM, 18),
     new WeightedModifierType(modifierTypes.MULTI_LENS, 18),
     new WeightedModifierType(modifierTypes.VOUCHER_PREMIUM, (party: Pokemon[], rerollCount: integer) => !party[0].scene.gameMode.isDaily && !party[0].scene.gameMode.isEndless && !party[0].scene.gameMode.isSplicedOnly ? Math.max(6 - rerollCount * 2, 0) : 0, 6),
+    new WeightedModifierType(modifierTypes.VOUCHER_GOLDEN, (party: Pokemon[], rerollCount: integer) => party[0].scene.gameMode.isLunamon ? Math.max(6 - rerollCount * 2, 0) : 0, 6),
     new WeightedModifierType(modifierTypes.DNA_SPLICERS, (party: Pokemon[]) => !party[0].scene.gameMode.isSplicedOnly && party.filter(p => !p.fusionSpecies).length > 1 ? 24 : 0, 24),
     new WeightedModifierType(modifierTypes.MINI_BLACK_HOLE, (party: Pokemon[]) => party[0].scene.gameData.unlocks[Unlockables.MINI_BLACK_HOLE] ? 1 : 0, 1),
   ].map(m => {
@@ -1798,6 +1803,48 @@ export function getPlayerShopModifierTypeOptionsForWave(waveIndex: integer, base
       new ModifierTypeOption(modifierTypes.SACRED_ASH(), 0, baseCost * 10)
     ]
   ];
+
+  return options.slice(0, Math.ceil(Math.max(waveIndex + 10, 0) / 30)).flat();
+}
+
+export function getLunaShopModifierTypeOptionsForWave(waveIndex: integer, baseCost: integer): ModifierTypeOption[] {
+  if (!(waveIndex % 10)) {
+    return [];
+  }
+  const options = [
+    [
+      new ModifierTypeOption(modifierTypes.POTION(), 0, baseCost * 0.2),
+      new ModifierTypeOption(modifierTypes.ETHER(), 0, baseCost * 0.4),
+      new ModifierTypeOption(modifierTypes.REVIVE(), 0, baseCost * 2),
+      new ModifierTypeOption(modifierTypes.VOUCHER(), 0, baseCost * 2.2)
+    ],
+    [
+      new ModifierTypeOption(modifierTypes.SUPER_POTION(), 0, baseCost * 0.45),
+      new ModifierTypeOption(modifierTypes.FULL_HEAL(), 0, baseCost),
+    ],
+    [
+      new ModifierTypeOption(modifierTypes.ELIXIR(), 0, baseCost),
+      new ModifierTypeOption(modifierTypes.MAX_ETHER(), 0, baseCost),
+      new ModifierTypeOption(modifierTypes.VOUCHER_PLUS(), 0, baseCost * 2.9)
+    ],
+    [
+      new ModifierTypeOption(modifierTypes.HYPER_POTION(), 0, baseCost * 0.8),
+      new ModifierTypeOption(modifierTypes.MAX_REVIVE(), 0, baseCost * 2.75),
+      new ModifierTypeOption(modifierTypes.VOUCHER_PREMIUM(), 0, baseCost * 12)
+    ],
+    [
+      new ModifierTypeOption(modifierTypes.MAX_POTION(), 0, baseCost * 1.5),
+      new ModifierTypeOption(modifierTypes.MAX_ELIXIR(), 0, baseCost * 2.5)
+    ],
+    [
+      new ModifierTypeOption(modifierTypes.FULL_RESTORE(), 0, baseCost * 2.25)
+    ],
+    [
+      new ModifierTypeOption(modifierTypes.SACRED_ASH(), 0, baseCost * 10),
+      new ModifierTypeOption(modifierTypes.VOUCHER_GOLDEN(), 0, baseCost * 20)
+    ]
+  ];
+
   return options.slice(0, Math.ceil(Math.max(waveIndex + 10, 0) / 30)).flat();
 }
 

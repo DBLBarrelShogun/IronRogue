@@ -16,7 +16,8 @@ export enum GameModes {
   DAILY,
   CHALLENGE,
   IRONMON,
-  KAIZOIRONMON
+  KAIZOIRONMON,
+  LUNAMON
 }
 
 interface GameModeConfig {
@@ -31,6 +32,7 @@ interface GameModeConfig {
   isSplicedOnly?: boolean;
   isChallenge?: boolean;
   isIronmon?: boolean;
+  isLunamon?: boolean;
 }
 
 export class GameMode implements GameModeConfig {
@@ -48,6 +50,7 @@ export class GameMode implements GameModeConfig {
   public challenges: Challenge[];
   public battleConfig: FixedBattleConfigs;
   public isIronmon: boolean;
+  public isLunamon: boolean;
 
   constructor(modeId: GameModes, config: GameModeConfig, battleConfig?: FixedBattleConfigs) {
     this.modeId = modeId;
@@ -183,6 +186,7 @@ export class GameMode implements GameModeConfig {
     case GameModes.DAILY:
       return waveIndex === 50;
     case GameModes.IRONMON:
+    case GameModes.LUNAMON:
     case GameModes.KAIZOIRONMON:
       return waveIndex === 200;
     }
@@ -268,6 +272,7 @@ export class GameMode implements GameModeConfig {
     case GameModes.CHALLENGE:
     case GameModes.DAILY:
     case GameModes.IRONMON:
+    case GameModes.LUNAMON:
     case GameModes.KAIZOIRONMON:
       return !isBoss ? 18 : 6;
     case GameModes.ENDLESS:
@@ -292,6 +297,8 @@ export class GameMode implements GameModeConfig {
       return "IronMon";
     case GameModes.KAIZOIRONMON:
       return "Kaizo IronMon";
+    case GameModes.LUNAMON:
+      return "LunaMon";
     }
   }
 
@@ -311,6 +318,8 @@ export class GameMode implements GameModeConfig {
       return "IronMon";
     case GameModes.KAIZOIRONMON:
       return "Kaizo IronMon";
+    case GameModes.LUNAMON:
+      return "LunaMon";
     }
   }
 }
@@ -329,6 +338,8 @@ export function getGameMode(gameMode: GameModes): GameMode {
     return new GameMode(GameModes.CHALLENGE, { isClassic: true, hasTrainers: true, isChallenge: true }, classicFixedBattles);
   case GameModes.IRONMON:
     return new GameMode(GameModes.IRONMON, {isClassic: true, hasTrainers: true, isIronmon: true}, classicFixedBattles);
+  case GameModes.LUNAMON:
+    return new GameMode(GameModes.LUNAMON, {isClassic: true, hasTrainers: true, isIronmon: true, isLunamon: true}, classicFixedBattles);
   case GameModes.KAIZOIRONMON:
     return new GameMode(GameModes.KAIZOIRONMON, {isClassic: true, hasTrainers: true, isIronmon: true}, classicFixedBattles);
   }
