@@ -2341,7 +2341,7 @@ export const PGMdialogue: DialogueTranslationEntries = {
   },
   "rival_2": {
     "encounter": {
-      1: `@c{smile}Hey, you're here too?\n@c{smile_eclosed}Still a perfect record, huh…?
+      1: `@c{smile}Hey, you're here too?\n@c{smile_eclosed}Why do you have a tail?
                 $@c{serious_mopen_fists}I know it kind of looks like I followed you here, but that's mostly not true.
                 $@c{serious_smile_fists}Honestly though, I've been itching for a rematch since you beat me back at home.
                 $I've been doing a lot of my own training so I'll definitely put up a fight this time.
@@ -2357,7 +2357,7 @@ export const PGMdialogue: DialogueTranslationEntries = {
   },
   "rival_2_female": {
     "encounter": {
-      1: `@c{smile_wave}Oh, fancy meeting you here. Looks like you're still undefeated. @c{angry_mopen}Huh… Not bad!
+      1: `@c{smile_wave}Oh, fancy meeting you here. Looks like you're still undefeated. @c{angry_mopen}Huh… Is that a tail?!
                 $@c{angry_mopen}I know what you're thinking, and no, I wasn't creeping on you. @c{smile_eclosed}I just happened to be in the area.
                 $@c{smile_ehalf}I'm happy for you but I just want to let you know that it's OK to lose sometimes.
                 $@c{smile}We learn from our mistakes, often more than we would if we kept succeeding.
