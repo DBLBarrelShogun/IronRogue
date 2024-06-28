@@ -868,8 +868,7 @@ export enum SpeciesFormKey {
   GIGANTAMAX = "gigantamax",
   GIGANTAMAX_SINGLE = "gigantamax-single",
   GIGANTAMAX_RAPID = "gigantamax-rapid",
-  ETERNAMAX = "eternamax",
-  GOTH = "goth"
+  ETERNAMAX = "eternamax"
 }
 
 export const allSpecies: PokemonSpecies[] = [];
@@ -1299,7 +1298,6 @@ export function initSpecies() {
     new PokemonSpecies(Species.GARDEVOIR, 3, false, false, false, "Embrace Pokémon", Type.PSYCHIC, Type.FAIRY, 1.6, 48.4, Abilities.SYNCHRONIZE, Abilities.TRACE, Abilities.TELEPATHY, 518, 68, 65, 65, 125, 115, 80, 45, 35, 259, GrowthRate.SLOW, 50, false, true,
       new PokemonForm("Normal", "", Type.PSYCHIC, Type.FAIRY, 1.6, 48.4, Abilities.SYNCHRONIZE, Abilities.TRACE, Abilities.TELEPATHY, 518, 68, 65, 65, 125, 115, 80, 45, 35, 259, false, null, true),
       new PokemonForm("Mega", SpeciesFormKey.MEGA, Type.PSYCHIC, Type.FAIRY, 1.6, 48.4, Abilities.PIXILATE, Abilities.PIXILATE, Abilities.PIXILATE, 618, 68, 85, 65, 165, 135, 100, 45, 35, 259),
-      new PokemonForm("Goth Cosplay", SpeciesFormKey.GOTH, Type.PSYCHIC, Type.FAIRY, 1.6, 48.4, Abilities.CUTE_CHARM, Abilities.ANTICIPATION, Abilities.DAMP, 518, 68, 65, 65, 125, 115, 80, 45, 35, 259, false, null, true), //Custom
     ),
     new PokemonSpecies(Species.SURSKIT, 3, false, false, false, "Pond Skater Pokémon", Type.BUG, Type.WATER, 0.5, 1.7, Abilities.SWIFT_SWIM, Abilities.NONE, Abilities.RAIN_DISH, 269, 40, 30, 32, 50, 52, 65, 200, 70, 54, GrowthRate.MEDIUM_FAST, 50, false),
     new PokemonSpecies(Species.MASQUERAIN, 3, false, false, false, "Eyeball Pokémon", Type.BUG, Type.FLYING, 0.8, 3.6, Abilities.INTIMIDATE, Abilities.NONE, Abilities.UNNERVE, 454, 70, 60, 62, 100, 82, 80, 75, 70, 159, GrowthRate.MEDIUM_FAST, 50, false),

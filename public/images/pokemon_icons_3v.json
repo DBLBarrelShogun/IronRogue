@@ -5,7 +5,7 @@
 			"format": "RGBA8888",
 			"size": {
 				"w": 128,
-				"h": 741
+				"h": 754
 			},
 			"scale": 1,
 			"frames": [
@@ -3830,7 +3830,28 @@
 						"w": 15,
 						"h": 19
 					}
-				}
+				},
+				{
+					"filename": "282-goth-cosplay",
+					"rotated": false,
+					"trimmed": true,
+					"sourceSize": {
+						"w": 34,
+						"h": 30
+					},
+					"spriteSourceSize": {
+						"x": 1,
+						"y": 1,
+						"w": 33,
+						"h": 29
+					},
+					"frame": {
+						"x": 4,
+						"y": 731,
+						"w": 26,
+						"h": 23
+					}
+				},
 			]
 		}
 	],

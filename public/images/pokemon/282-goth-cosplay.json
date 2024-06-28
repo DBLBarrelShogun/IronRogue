@@ -1,0 +1,41 @@
+{
+	"textures": [
+		{
+			"image": "282-goth-cosplay.png",
+			"format": "RGBA8888",
+			"size": {
+				"w": 76,
+				"h": 76
+			},
+			"scale": 1,
+			"frames": [
+				{
+					"filename": "0001.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 76,
+						"h": 76
+					},
+					"spriteSourceSize": {
+						"x": 17,
+						"y": 1,
+						"w": 41,
+						"h": 74
+					},
+					"frame": {
+						"x": 17,
+						"y": 1,
+						"w": 41,
+						"h": 74
+					}
+				}
+			]
+		}
+	],
+	"meta": {
+		"app": "https://www.codeandweb.com/texturepacker",
+		"version": "3.0",
+		"smartupdate": "$TexturePacker:SmartUpdate:e0835af43e2da4d838e6b6908d00d6c1:76330212965023e7ec56ff865bcd2e42:6ea0cb09185173f6fef52597e9c01b85$"
+	}
+}

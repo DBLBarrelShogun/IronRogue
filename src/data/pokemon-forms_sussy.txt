@@ -126,7 +126,7 @@ export enum FormChangeItem {
   DARK_MEMORY,
   FAIRY_MEMORY,
   BLANK_MEMORY,  // TODO: Find a potential use for this
-
+  
   HOT_TOPIC
 }
 

@@ -1186,6 +1186,27 @@
 					}
 				},
 				{
+					"filename": "hot_topic",
+					"rotated": false,
+					"trimmed": true,
+					"sourceSize": {
+						"w": 32,
+						"h": 32
+					},
+					"spriteSourceSize": {
+						"x": 4,
+						"y": 5,
+						"w": 24,
+						"h": 23
+					},
+					"frame": {
+						"x": 24,
+						"y": 392,
+						"w": 24,
+						"h": 23
+					}
+				},
+				{
 					"filename": "hp_up",
 					"rotated": false,
 					"trimmed": true,

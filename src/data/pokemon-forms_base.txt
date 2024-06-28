@@ -126,7 +126,7 @@ export enum FormChangeItem {
   DARK_MEMORY,
   FAIRY_MEMORY,
   BLANK_MEMORY,  // TODO: Find a potential use for this
-
+  
   HOT_TOPIC
 }
 
@@ -480,8 +480,7 @@ export const pokemonFormChanges: PokemonFormChanges = {
     new SpeciesFormChange(Species.SWAMPERT, "", SpeciesFormKey.MEGA, new SpeciesFormChangeItemTrigger(FormChangeItem.SWAMPERTITE))
   ],
   [Species.GARDEVOIR]: [
-    new SpeciesFormChange(Species.GARDEVOIR, "", SpeciesFormKey.MEGA, new SpeciesFormChangeItemTrigger(FormChangeItem.GARDEVOIRITE)),
-    new SpeciesFormChange(Species.GARDEVOIR, "", SpeciesFormKey.GOTH, new SpeciesFormChangeItemTrigger(FormChangeItem.HOT_TOPIC))
+    new SpeciesFormChange(Species.GARDEVOIR, "", SpeciesFormKey.MEGA, new SpeciesFormChangeItemTrigger(FormChangeItem.GARDEVOIRITE))
   ],
   [Species.SABLEYE]: [
     new SpeciesFormChange(Species.SABLEYE, "", SpeciesFormKey.MEGA, new SpeciesFormChangeItemTrigger(FormChangeItem.SABLENITE))
